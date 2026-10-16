@@ -464,6 +464,28 @@ ${indent}}
 
 ${indent}.btn--quiet:hover { background: var(--surface); }
 
+/* A destructive action is a distinct button, not a warning label on a normal
+   one, and it carries its own hover, focus and disabled so that revoking a
+   person's access never looks like saving a setting. */
+${indent}.btn--danger {
+${indent}  color: var(--brand-ink);
+${indent}  background: var(--danger-fill);
+${indent}  border-color: transparent;
+${indent}}
+${indent}.btn--danger:hover { background: var(--danger-hover); }
+${indent}.btn--danger:active { transform: translateY(1px); }
+${indent}.btn--danger:focus-visible {
+${indent}  outline: 2px solid var(--focus);
+${indent}  outline-offset: 2px;
+${indent}}
+${indent}.btn--danger:disabled {
+${indent}  background: var(--disabled-surface);
+${indent}  color: var(--disabled);
+${indent}  border-color: var(--edge);
+${indent}  cursor: not-allowed;
+${indent}  transform: none;
+${indent}}
+
 ${indent}.btn:disabled {
 ${indent}  /* A disabled control reads as unavailable by being pale, not heavy.
 ${indent}     A dark fill with white text passes contrast comfortably and still

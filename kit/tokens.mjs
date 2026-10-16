@@ -180,7 +180,14 @@ export function palette({
   // number: mix(brand, surface, 0.92) is 8% brand on 92% paper. Getting this
   // backwards produces a nearly solid blue row, which is both ugly and 3:1
   // instead of 12:1 under the text.
-  const hover = toHex(mix("#808080", surface, 0.94));
+  //
+  // The hover tint doubles as a skeleton fill, so it is a shade deeper than a
+  // pure "barely there" wash: at 94% it vanished into white on a phone, and a
+  // skeleton you cannot see is not reserving any space.
+  // The hover tint doubles as a skeleton fill, so it is a shade deeper than a
+  // pure "barely there" wash: at 94% it vanished into white on a phone, and a
+  // skeleton you cannot see is not reserving any space.
+  const hover = toHex(mix("#6b7280", surface, 0.9));
   const bodyOnHover = ensureContrast(body, hover, { ratio: 4.5 });
   const mutedOnHover = ensureContrast(muted, hover, { ratio: 4.5 });
   const selected = toHex(mix(brand, surface, 0.92));
@@ -201,6 +208,12 @@ export function palette({
   const edge = ensureContrast("#8a919d", surface, { ratio: 3 });
   const edgeStrong = ensureContrast("#5d6470", surface, { ratio: 3 });
   const focus = ensureContrast(brand, surface, { ratio: 3 });
+
+  // A destructive action's fill. The danger *edge* token is tuned to be
+  // perceivable as a border, not to carry white text, so a button needs its own
+  // pair.
+  const dangerFill = ensureContrast(danger, surface, { ratio: 4.5 });
+  const dangerHover = toHex(shade(dangerFill, -0.12));
 
   const disabledSurface = toHex(mix(edge, surface, 0.55));
 
@@ -234,6 +247,8 @@ export function palette({
     brandQuiet,
     focus,
     danger: dangerEdge,
+    dangerFill,
+    dangerHover,
     dangerInk: dangerOnSoft,
     dangerInkOnSelected,
     dangerSoft,

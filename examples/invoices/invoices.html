@@ -17,7 +17,7 @@
   --faint: #5b6472;
   --edge: #8a919d;
   --edge-strong: #5d6470;
-  --hover: #f7f7f7;
+  --hover: #f0f1f2;
   --selected: #edf1fc;
   --body-on-hover: #1a1a1a;
   --muted-on-hover: #3f4652;
@@ -31,6 +31,8 @@
   --brand-quiet: #1d4ed8;
   --focus: #1d4ed8;
   --danger: #b42318;
+  --danger-fill: #b42318;
+  --danger-hover: #9e1f15;
   --danger-ink: #5c120c;
   --danger-ink-on-selected: #5c120c;
   --danger-soft: #f9eded;
@@ -133,6 +135,28 @@
   }
 
   .btn--quiet:hover { background: var(--surface); }
+
+/* A destructive action is a distinct button, not a warning label on a normal
+   one, and it carries its own hover, focus and disabled so that revoking a
+   person's access never looks like saving a setting. */
+  .btn--danger {
+    color: var(--brand-ink);
+    background: var(--danger-fill);
+    border-color: transparent;
+  }
+  .btn--danger:hover { background: var(--danger-hover); }
+  .btn--danger:active { transform: translateY(1px); }
+  .btn--danger:focus-visible {
+    outline: 2px solid var(--focus);
+    outline-offset: 2px;
+  }
+  .btn--danger:disabled {
+    background: var(--disabled-surface);
+    color: var(--disabled);
+    border-color: var(--edge);
+    cursor: not-allowed;
+    transform: none;
+  }
 
   .btn:disabled {
     /* A disabled control reads as unavailable by being pale, not heavy.
@@ -663,10 +687,10 @@
   --faint: #757d89;
   --edge: #8a919d;
   --edge-strong: #5d6470;
-  --hover: #15181c;
+  --hover: #171b21;
   --selected: #171c29;
-  --body-on-hover: #808080;
-  --muted-on-hover: #7c8189;
+  --body-on-hover: #838383;
+  --muted-on-hover: #7e838a;
   --body-on-selected: #848484;
   --muted-on-selected: #7f848b;
   --body-on-brand-soft: #848484;
@@ -677,6 +701,8 @@
   --brand-quiet: #7c9cff;
   --focus: #7c9cff;
   --danger: #ff8a80;
+  --danger-fill: #ff8a80;
+  --danger-hover: #e07971;
   --danger-ink: #a37a76;
   --danger-ink-on-selected: #a37a76;
   --danger-soft: #211b1e;
