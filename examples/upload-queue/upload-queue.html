@@ -17,6 +17,14 @@
   --faint: #5b6472;
   --edge: #8a919d;
   --edge-strong: #5d6470;
+  --hover: #f7f7f7;
+  --selected: #edf1fc;
+  --body-on-hover: #1a1a1a;
+  --muted-on-hover: #3f4652;
+  --body-on-selected: #1a1a1a;
+  --muted-on-selected: #3f4652;
+  --body-on-brand-soft: #1a1a1a;
+  --edge-strong-on-selected: #5d6470;
   --brand: #1d4ed8;
   --brand-ink: #ffffff;
   --brand-hover: #1a45be;
@@ -24,7 +32,14 @@
   --focus: #1d4ed8;
   --danger: #b42318;
   --danger-ink: #5c120c;
+  --danger-ink-on-selected: #5c120c;
   --danger-soft: #f9eded;
+  --ok-soft: #ecf5ef;
+  --ok-ink: #15803d;
+  --ok-ink-on-selected: #157d3c;
+  --warn-soft: #f7f2eb;
+  --warn-ink: #9f6107;
+  --warn-ink-on-selected: #9e6007;
   --disabled-surface: #caced3;
   --disabled: #3f4652;
 }
@@ -360,6 +375,228 @@
     border: 0;
   }
 
+/* ---- Table ----
+   A table is the component that breaks hardest on a phone, and the fix is not
+   a smaller font: it is deciding what a row means when the columns cannot sit
+   side by side. Below 640px each row becomes a card with its own labels, so no
+   value is ever orphaned from its heading. */
+
+  .table-wrap {
+    /* overflow-x:auto on a wide table is the honest fallback for the
+       mid sizes, but it is a last resort: the card layout below means
+       it is rarely reached. */
+    overflow-x: auto;
+    margin: 0 calc(-1 * 24px);
+    padding: 0 24px;
+  }
+
+  .table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 15px;
+  }
+
+  .table__caption {
+    text-align: left;
+    padding-bottom: 12px;
+    color: var(--muted);
+    font-size: 13px;
+  }
+
+  .table th,
+  .table td {
+    padding: 12px 16px;
+    text-align: left;
+    border-bottom: 1px solid var(--edge);
+  }
+
+  .table th {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+
+  .table th[scope="row"] {
+    font-weight: 500;
+    color: var(--body);
+  }
+
+  /* An identifier, a date and a money value are single tokens. Letting them
+     wrap mid-token ("INV-" over "2041") is what makes a table look
+     broken at a glance even when every column is legible. */
+  .table th[scope="row"],
+  .table td[data-label="Invoice"],
+  .table td[data-label="Due"] { white-space: nowrap; }
+
+  .num { font-variant-numeric: tabular-nums; }
+
+  .table tbody tr { transition: background-color 100ms cubic-bezier(0.2, 0, 0, 1); }
+  .table tbody tr:hover { background: var(--hover); }
+  .table tbody tr:hover td,
+  .table tbody tr:hover th { color: var(--body-on-hover); }
+  .table tbody tr.row--selected { background: var(--selected); }
+  .table tbody tr.row--selected td,
+  .table tbody tr.row--selected th { color: var(--body-on-selected); }
+  .table tbody tr.row--selected td:first-child {
+    /* Selection is a tint plus a rail, so the state never depends on the
+       tint alone, and the rail survives a greyscale render. */
+    box-shadow: inset 3px 0 0 var(--brand);
+  }
+  .table tbody tr.row--selected .status--ok { color: var(--ok-ink-on-selected); }
+  .table tbody tr.row--selected .status--warn { color: var(--warn-ink-on-selected); }
+  .table tbody tr.row--selected .status--stop { color: var(--danger-ink-on-selected); }
+  .table tbody tr.row--selected .status--neutral { color: var(--body-on-selected); }
+
+  /* Inside a tinted row the pill's own soft fill would be a third layer of
+     tint on top of the row tint, and the ink loses contrast against the
+     result. Dropping the fill costs nothing: the row already says it is
+     selected, and the word in the pill still carries the status. */
+  tr.row--selected .status { background: transparent; padding-left: 0; padding-right: 0; }
+
+  /* A control inside a tinted row keeps its own fill, and its label is
+     re-judged against that fill rather than against the row. Without this
+     a quiet button in a selected row loses contrast twice over. */
+  tr.row--selected .btn--quiet {
+    color: var(--body-on-brand-soft);
+    border-color: var(--edge-strong-on-selected);
+  }
+
+/* The sortable header is a real button, so it is a real target with a ring. */
+  .th-sort {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    min-height: 44px;
+    margin: calc(-1 * 12px) calc(-1 * 16px);
+    padding: 12px 16px;
+    font: inherit;
+    color: inherit;
+    background: transparent;
+    border: 0;
+    cursor: pointer;
+  }
+
+  .th-sort:hover { color: var(--body); }
+
+  .th-sort:focus-visible {
+    outline: 2px solid var(--focus);
+    outline-offset: -2px;
+    border-radius: 6px;
+  }
+
+  .th-sort--active { color: var(--body); }
+  .th-sort__arrow { font-size: 11px; opacity: 0.65; }
+  .th-sort--active .th-sort__arrow { opacity: 1; }
+
+/* ---- Skeleton: the shape of the content it replaces ---- */
+
+  .table-skeleton {
+    /* Sits under an empty table, so the height it reserves is the height
+       the rows will take. A spinner here would collapse the layout. */
+    padding: 8px 0 16px;
+  }
+  .skeleton { display: grid; gap: 12px; }
+  .skeleton__row { display: flex; gap: 16px; }
+  .skeleton__bar {
+    flex: 1;
+    height: 14px;
+    border-radius: 6px;
+    /* A visible base colour with a pulse on top, rather than a pulse
+       alone. A skeleton whose only signal is an opacity animation
+       renders as an empty box in any screenshot taken between keyframes,
+       which is exactly when somebody is looking for evidence. */
+    background: var(--hover);
+    animation: states-pulse 1.4s ease-in-out infinite;
+  }
+/* The pulse fades rather than disappearing, so the bar is always at least
+   half visible and the shape never vanishes between keyframes. */
+@keyframes states-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+/* ---- Status: the word carries the meaning, the dot only reinforces it ---- */
+
+  .status {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 2px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 500;
+    white-space: nowrap;
+  }
+
+  .status__dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: currentColor;
+  }
+
+  .status--ok { color: var(--ok-ink); background: var(--ok-soft); }
+  .status--warn { color: var(--warn-ink); background: var(--warn-soft); }
+  .status--stop { color: var(--danger-ink); background: var(--danger-soft); }
+  .status--neutral { color: var(--muted); background: var(--hover); }
+
+/* Secondary text inside a tinted row, re-judged against the tint. */
+  .muted-text { color: var(--muted); }
+  tr:hover .muted-text { color: var(--muted-on-hover); }
+  tr.row--selected .muted-text { color: var(--muted-on-selected); }
+
+/* ---- Pagination: the edges are disabled, not hidden ---- */
+
+  .pagination {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 16px;
+  }
+
+  .pagination__step {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    font: inherit;
+    color: var(--body);
+    background: transparent;
+    border: 1px solid var(--edge-strong);
+    border-radius: 8px;
+    cursor: pointer;
+  }
+
+  .pagination__step:hover:not(:disabled) { background: var(--hover); }
+
+  .pagination__step:focus-visible {
+    outline: 2px solid var(--focus);
+    outline-offset: 2px;
+  }
+
+  .pagination__step:disabled {
+    color: var(--disabled);
+    border-color: var(--edge);
+    cursor: not-allowed;
+  }
+
+  .pagination__status { font-size: 13px; color: var(--muted); }
+
+/* ---- Toolbar ---- */
+
+  .toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+
+  .toolbar .field { margin-bottom: 0; flex: 1; min-width: 180px; }
+
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after {
       animation-duration: 1ms !important;
@@ -368,6 +605,46 @@
       scroll-behavior: auto !important;
     }
   }
+
+/* A table turns into a stack of cards on a phone. Each value keeps its own
+   label, because a bare value with no heading is unreadable in a card. */
+@media (max-width: 640px) {
+  .table-wrap { overflow-x: visible; margin-inline: 0; padding-inline: 0; }
+  .table thead { display: none; }
+  .table, .table tbody, .table tr, .table td, .table th[scope="row"] { display: block; width: 100%; }
+  /* The caption is not a cell. Letting it into the row rules turns it into a
+     stack of one-word lines, which is how a caption ends up one word wide. */
+  .table caption { display: block; width: 100%; padding: 0 0 12px; }
+  .table tr {
+    border: 1px solid var(--edge);
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin-bottom: 12px;
+  }
+  .table tbody tr.row--selected td:first-child { box-shadow: none; }
+  .table tbody tr.row--selected { border-color: var(--brand); }
+  .table td, .table th[scope="row"] {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 16px;
+    padding: 6px 0;
+    border-bottom: 0;
+    /* The row header is bold in the wide layout; in the card layout the row's
+       identity should not shout over the values it heads. */
+    font-weight: 500;
+  }
+  .table td::before, .table th[scope="row"]::before {
+    content: attr(data-label);
+    flex: none;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--muted);
+  }
+  /* A label that does not apply, like the row action cell, gets no label
+     rather than an empty one. */
+  .table td[data-label=""]::before { content: none; }
+}
 
 @media (max-width: 480px) {
   .wrap { padding: 24px 16px 48px; }
@@ -386,6 +663,14 @@
   --faint: #757d89;
   --edge: #8a919d;
   --edge-strong: #5d6470;
+  --hover: #15181c;
+  --selected: #171c29;
+  --body-on-hover: #808080;
+  --muted-on-hover: #7c8189;
+  --body-on-selected: #848484;
+  --muted-on-selected: #7f848b;
+  --body-on-brand-soft: #848484;
+  --edge-strong-on-selected: #626974;
   --brand: #7c9cff;
   --brand-ink: #363636;
   --brand-hover: #6d89e0;
@@ -393,7 +678,14 @@
   --focus: #7c9cff;
   --danger: #ff8a80;
   --danger-ink: #a37a76;
+  --danger-ink-on-selected: #a37a76;
   --danger-soft: #211b1e;
+  --ok-soft: #0f1a19;
+  --ok-ink: #339156;
+  --ok-ink-on-selected: #3a945c;
+  --warn-soft: #1a1715;
+  --warn-ink: #ac7525;
+  --warn-ink-on-selected: #af7a2c;
   --disabled-surface: #464b53;
   --disabled: #999da3;
 }
