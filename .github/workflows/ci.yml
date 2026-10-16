@@ -50,12 +50,14 @@ jobs:
 
       # The generated example must build and pass, which is the claim the kit
       # makes about itself: a generator cannot emit a component without its states.
-      # The table is included because a generator that only ever produced a form
-      # would not have found the tint-on-a-tint contrast bug.
+      # The table and the permissions panel are included because a generator that
+      # only ever produced a form would not have found the tint-on-a-tint
+      # contrast bug, nor the missing danger variant.
       - name: Build and audit the generated examples
         run: |
           node examples/upload-queue/build.mjs
           node examples/invoices/build.mjs
+          node examples/access/build.mjs
 
       # The fixture with defects on purpose must keep failing, in a specific way.
       # If it ever passes, the checks stopped checking.
@@ -90,12 +92,16 @@ jobs:
           node scripts/measure.mjs examples/invoices/invoices.html --width 640
           node scripts/measure.mjs examples/invoices/invoices.html --width 390
           node scripts/measure.mjs examples/invoices/invoices.html --width 320
+          node scripts/measure.mjs examples/access/access.html --width 640
+          node scripts/measure.mjs examples/access/access.html --width 390
+          node scripts/measure.mjs examples/access/access.html --width 320
 
       - name: Screenshots
         run: |
           node scripts/shot.mjs examples/billing-settings/billing-settings.html --out shots
           node scripts/shot.mjs examples/upload-queue/upload-queue.html --out shots
           node scripts/shot.mjs examples/invoices/invoices.html --out shots
+          node scripts/shot.mjs examples/access/access.html --out shots
 
       - uses: actions/upload-artifact@v5
         with:
@@ -121,6 +127,7 @@ jobs:
         run: |
           node examples/upload-queue/build.mjs
           node examples/invoices/build.mjs
+          node examples/access/build.mjs
 
       - name: Committed pages are unchanged
         run: |
