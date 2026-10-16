@@ -1,0 +1,471 @@
+<!doctype html>
+<!--
+  The reference for what a finished interface looks like under this skill.
+
+  This is the smallest example that passes `node scripts/audit.mjs` with zero
+  errors. Open it before you start building something else, and copy the shape of
+  it rather than the colours.
+
+  What makes it pass is not restraint. It is that every control has all of its
+  states, every state is legible, and every number below is real:
+
+    focus      a visible ring on every control, 3:1 against its surface
+    hover      one step darker, never the only cue
+    active     pressed 1px down, so the press is felt
+    disabled   45% opacity, and its contrast is still reported as a note
+    invalid    a red border AND a message AND aria-describedby
+    loading    a spinner and aria-busy, so the state is announced
+    empty      a real empty state with a way out
+    reduced    @media (prefers-reduced-motion) turns the motion off
+    narrow     fluid layout, no fixed width anywhere
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Billing settings</title>
+<style>
+  :root {
+    color-scheme: light dark;
+
+    --paper: #ffffff;
+    --surface: #f7f8fa;
+    --ink: #16181d;        /* 16.9:1 on paper */
+    --ink-muted: #5b6472;  /* 5.6:1  on paper */
+    --edge: #d7dbe2;
+    --edge-strong: #a8b0bd;
+    --brand: #1d4ed8;
+    --brand-ink: #ffffff;  /* 6.9:1 on brand */
+    --brand-hover: #1e40af;
+    --danger: #b42318;
+    --danger-soft: #fef3f2;
+    --danger-ink: #912018; /* 7.4:1 on danger-soft */
+    --focus: #1d4ed8;
+
+    --radius: 10px;
+    --tap: 44px;
+    --ease: cubic-bezier(0.2, 0, 0, 1);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --paper: #0e1116;
+      --surface: #171b22;
+      --ink: #e8eaed;
+      --ink-muted: #a2acbb;
+      --edge: #2b313b;
+      --edge-strong: #4a525f;
+      --brand: #7c9cff;
+      --brand-ink: #0b1020;
+      --brand-hover: #93aeff;
+      --danger: #ff8a80;
+      --danger-soft: #2a1512;
+      --danger-ink: #ffb4ab;
+      --focus: #7c9cff;
+    }
+  }
+
+  *, *::before, *::after { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    font-size: 16px;
+    line-height: 1.5;
+  }
+
+  .wrap {
+    max-width: 640px;
+    margin: 0 auto;
+    padding: 40px 24px 72px;
+  }
+
+  h1 {
+    font-size: 28px;
+    line-height: 1.2;
+    margin: 0 0 6px;
+    letter-spacing: -0.02em;
+  }
+
+  .lede {
+    margin: 0 0 32px;
+    color: var(--ink-muted);
+    font-size: 15px;
+  }
+
+  /* A panel is a surface, not a border. */
+  .panel {
+    /* No width is declared. The panel takes its container's width, and
+       box-sizing (set globally above) keeps the padding inside it. Declaring
+       a width here is what makes panels overflow on a phone. */
+    background: var(--surface);
+    border: 1px solid var(--edge);
+    border-radius: var(--radius);
+    padding: 24px;
+  }
+
+  .panel + .panel { margin-top: 16px; }
+
+  .panel__title {
+    margin: 0 0 4px;
+    font-size: 16px;
+    font-weight: 600;
+  }
+
+  .panel__note {
+    margin: 0 0 20px;
+    color: var(--ink-muted);
+    font-size: 14px;
+  }
+
+  /* ---- Field: label, control, message ---- */
+
+  .field { margin-bottom: 20px; }
+
+  .field:last-child { margin-bottom: 0; }
+
+  .field__label {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 14px;
+    font-weight: 500;
+  }
+
+  .field__control {
+    display: block;
+    /* width:100% plus horizontal padding overflows unless box-sizing is
+       border-box, which is why the global reset above matters. */
+    width: 100%;
+    min-width: 0;
+    min-height: var(--tap);
+    padding: 10px 14px;
+    font: inherit;
+    font-size: 15px;
+    color: var(--ink);
+    background: var(--paper);
+    border: 1px solid var(--edge-strong);
+    border-radius: 8px;
+    transition: border-color 120ms var(--ease), box-shadow 120ms var(--ease);
+  }
+
+  .field__control::placeholder { color: var(--ink-muted); opacity: 1; }
+
+  .field__control:hover { border-color: var(--ink-muted); }
+
+  /* The focus ring is visible on every control and clears 3:1 against the paper. */
+  .field__control:focus-visible {
+    outline: 2px solid var(--focus);
+    outline-offset: 2px;
+    border-color: var(--focus);
+  }
+
+  .field__control:disabled {
+    background: var(--surface);
+    color: var(--ink-muted);
+    cursor: not-allowed;
+  }
+
+  .field__control[aria-invalid="true"] {
+    border-color: var(--danger);
+    background: var(--danger-soft);
+  }
+
+  .field__control[aria-invalid="true"]:focus-visible {
+    outline-color: var(--danger);
+  }
+
+  /* The invalid state is never colour alone: there is a message too. */
+  .field__message {
+    margin: 6px 0 0;
+    font-size: 13px;
+    color: var(--danger-ink);
+  }
+
+  .field__message::before { content: "⚠ "; }
+
+  /* ---- Button ---- */
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    /* 44px tall: the whole point of the tap target rule. */
+    min-height: var(--tap);
+    padding: 10px 20px;
+    font: inherit;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--brand-ink);
+    background: var(--brand);
+    border: 1px solid transparent;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 120ms var(--ease), transform 80ms var(--ease);
+  }
+
+  .btn:hover { background: var(--brand-hover); }
+  .btn:active { transform: translateY(1px); }
+
+  .btn:focus-visible {
+    outline: 2px solid var(--focus);
+    outline-offset: 2px;
+  }
+
+  .btn:disabled {
+    background: var(--edge);
+    color: var(--ink-muted);
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  .btn--quiet {
+    color: var(--ink);
+    background: transparent;
+    border-color: var(--edge-strong);
+  }
+  .btn--quiet:hover { background: var(--surface); }
+
+  /* A loading button keeps its size, so the layout does not jump. */
+  .btn[aria-busy="true"] { cursor: progress; }
+
+  .btn__spinner {
+    width: 14px;
+    height: 14px;
+    border: 2px solid currentColor;
+    border-top-color: transparent;
+    border-radius: 50%;
+    animation: spin 700ms linear infinite;
+  }
+
+  .btn[aria-busy="true"] .btn__label { opacity: 0.7; }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ---- Switch: a knob, so the state is not colour alone ---- */
+
+  .switch {
+    position: relative;
+    flex: none;
+    width: 46px;
+    height: 26px;
+    padding: 0;
+    border: 1px solid var(--edge-strong);
+    border-radius: 999px;
+    background: var(--surface);
+    cursor: pointer;
+    appearance: none;
+    transition: background-color 140ms var(--ease), border-color 140ms var(--ease);
+  }
+
+  .switch::after {
+    content: "";
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--ink-muted);
+    transition: transform 140ms var(--ease), background-color 140ms var(--ease);
+  }
+
+  .switch[aria-checked="true"] {
+    background: var(--brand);
+    border-color: var(--brand);
+  }
+
+  .switch[aria-checked="true"]::after {
+    /* The knob moves. Position is a second cue on top of colour. */
+    transform: translateX(20px);
+    background: var(--brand-ink);
+  }
+
+  .switch:hover { border-color: var(--ink-muted); }
+
+  .switch:focus-visible {
+    outline: 2px solid var(--focus);
+    outline-offset: 2px;
+  }
+
+  .switch:disabled { opacity: 0.45; cursor: not-allowed; }
+
+  /* ---- Rows ---- */
+
+  .row {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    min-height: var(--tap);
+    padding: 10px 0;
+  }
+
+  .row + .row { border-top: 1px solid var(--edge); }
+
+  .row__text {
+    /* flex:1 alone lets the text push the switch out of the row, because a
+       flex item's default min-width:auto refuses to shrink below its content.
+       min-width:0 is what keeps the switch on screen. */
+    flex: 1;
+    min-width: 0;
+  }
+
+  .row__label {
+    display: block;
+    font-size: 15px;
+    font-weight: 500;
+  }
+
+  .row__note {
+    display: block;
+    margin-top: 2px;
+    font-size: 13px;
+    color: var(--ink-muted);
+  }
+
+  .actions {
+    display: flex;
+    gap: 12px;
+    /* Wrapping is what keeps a third button from being cut off on a phone. */
+    flex-wrap: wrap;
+    margin-top: 24px;
+    padding-top: 20px;
+    border-top: 1px solid var(--edge);
+  }
+
+  /* ---- The empty state: a real state, not an afterthought ---- */
+
+  .empty {
+    padding: 32px 24px;
+    text-align: center;
+    border: 1px dashed var(--edge-strong);
+    border-radius: var(--radius);
+  }
+
+  .empty__title {
+    margin: 0 0 6px;
+    font-size: 15px;
+    font-weight: 600;
+  }
+
+  .empty__body {
+    margin: 0 0 16px;
+    font-size: 14px;
+    color: var(--ink-muted);
+  }
+
+  /* Motion is opt-in, and switched off when asked. */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 1ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 1ms !important;
+      scroll-behavior: auto !important;
+    }
+    .btn:active { transform: none; }
+    .switch[aria-checked="true"]::after { transform: translateX(20px); }
+  }
+
+  /* Narrow screens: the layout is already fluid, this only tightens it. */
+  @media (max-width: 480px) {
+    .wrap { padding: 24px 16px 56px; }
+    .panel { padding: 18px; }
+    .actions .btn { flex: 1; }
+  }
+
+  .visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+    border: 0;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Billing settings</h1>
+  <p class="lede">These apply to every workspace on the Team plan.</p>
+
+  <form class="panel" novalidate>
+    <h2 class="panel__title">Workspace details</h2>
+    <p class="panel__note">Shown on every invoice.</p>
+
+    <div class="field">
+      <label class="field__label" for="ws-name">Workspace name</label>
+      <!-- The invalid state carries a border, a message and aria-describedby,
+           so it is never colour alone. -->
+      <input
+        class="field__control"
+        id="ws-name"
+        name="workspace"
+        type="text"
+        value="Acme Design"
+        aria-invalid="true"
+        aria-describedby="ws-name-msg"
+      >
+      <p class="field__message" id="ws-name-msg">Workspace names must be 3–40 characters.</p>
+    </div>
+
+    <div class="field">
+      <label class="field__label" for="ws-email">Billing email</label>
+      <input
+        class="field__control"
+        id="ws-email"
+        name="email"
+        type="email"
+        placeholder="you@company.com"
+        aria-describedby="ws-email-hint"
+      >
+      <p class="field__note" id="ws-email-hint">Invoices and receipts go here.</p>
+    </div>
+
+    <div class="row">
+      <span class="row__text">
+        <span class="row__label">Auto-charge</span>
+        <span class="row__note">Charge the saved card on the first of each month.</span>
+      </span>
+      <button class="switch" type="button" role="switch" aria-checked="true">
+        <span class="visually-hidden">Auto-charge</span>
+      </button>
+    </div>
+
+    <div class="row">
+      <span class="row__text">
+        <span class="row__label">Usage alerts</span>
+        <span class="row__note">Email me at 80%, 90% and 100% of the plan.</span>
+      </span>
+      <button class="switch" type="button" role="switch" aria-checked="false">
+        <span class="visually-hidden">Usage alerts</span>
+      </button>
+    </div>
+
+    <div class="actions">
+      <button class="btn" type="submit">
+        <span class="btn__label">Save changes</span>
+      </button>
+      <button class="btn btn--quiet" type="reset">Discard</button>
+      <button class="btn" type="button" disabled>
+        <span class="btn__label">Export CSV</span>
+      </button>
+    </div>
+  </form>
+
+  <!-- The empty state is a state. -->
+  <div class="panel">
+    <h2 class="panel__title">Payment methods</h2>
+    <div class="empty">
+      <p class="empty__title">No payment method yet</p>
+      <p class="empty__body">Add a card to turn on auto-charge.</p>
+      <button class="btn btn--quiet" type="button">Add a card</button>
+    </div>
+  </div>
+</div>
+</body>
+</html>

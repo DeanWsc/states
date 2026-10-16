@@ -1,0 +1,161 @@
+<!doctype html>
+<!--
+  A page with every defect the audit is built to catch, on purpose.
+
+  This file is a fixture, not an example. It exists so the audit's tests can
+  prove each check fires on a real violation rather than on a mock. If you copy
+  anything from here, copy the fixes in the comments, not the code.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Every defect on purpose</title>
+<style>
+  :root {
+    --ink: #1a1a1a;
+    --paper: #ffffff;
+    --muted: #9ca3af;   /* 2.4:1 on white: too light for body text */
+    --edge: #e5e7eb;
+    --brand: #2563eb;
+    --danger: #dc2626;
+  }
+
+  body {
+    margin: 0;
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    background: var(--paper);
+    color: var(--ink);
+    font-size: 16px;
+    line-height: 1.5;
+  }
+
+  .wrap { max-width: 960px; margin: 0 auto; padding: 32px 24px; }
+
+  h1 { font-size: 28px; margin: 0 0 8px; }
+
+  /* Defect: helper text at 2.4:1 on the page surface. */
+  .hint { color: var(--muted); font-size: 14px; }
+
+  /* Defect: a fixed 720px panel with no narrow fallback. */
+  .panel {
+    width: 720px;
+    border: 1px solid var(--edge);
+    border-radius: 12px;
+    padding: 24px;
+    background: #fafafa;
+  }
+
+  /* Defect: placeholder text is not an accessible name, and there is no label. */
+  .field input {
+    width: 100%;
+    padding: 10px 12px;
+    font-size: 15px;
+    border: 1px solid var(--edge);
+    border-radius: 8px;
+    background: #fff;
+  }
+  .field input::placeholder { color: #b0b5bd; }
+
+  /* Defect: the button sets outline:none on focus and replaces it with nothing,
+     so keyboard users cannot see where they are. */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 28px;            /* under the 44px ideal, under 24px minimum */
+    padding: 0 10px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #ffffff;
+    background: var(--brand);
+    border: 0;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 160ms ease, transform 160ms ease;
+  }
+  .btn:focus { outline: none; }
+
+  /* Defect: hover and active are styled, but focus is suppressed and disabled
+     is never styled at all. */
+  .btn:hover { background: #1d4ed8; }
+  .btn:active { transform: translateY(1px); }
+
+  /* Defect: the invalid field is signalled by a red border alone, with no
+     message and no icon. */
+  .field input[aria-invalid="true"] {
+    border-color: var(--danger);
+    background: #fff5f5;
+  }
+
+  /* Defect: an icon-only control with no accessible name. */
+  .icon-btn {
+    width: 32px;
+    height: 32px;
+    border: 0;
+    background: transparent;
+    color: var(--ink);
+    cursor: pointer;
+    animation: pulse 2s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.6; }
+  }
+
+  /* Defect: a switch that is only distinguishable by its background colour. */
+  .switch {
+    position: relative;
+    width: 44px;
+    height: 24px;
+    border-radius: 999px;
+    background: #cbd5e1;
+    border: 0;
+    cursor: pointer;
+    appearance: none;
+  }
+  .switch[aria-checked="true"] { background: var(--brand); }
+
+  .row { display: flex; gap: 12px; align-items: center; margin-top: 20px; }
+
+  /* Defect: this transition animates, and there is no prefers-reduced-motion
+     guard anywhere in the stylesheet. */
+  .badge {
+    display: inline-block;
+    padding: 4px 10px;
+    font-size: 12px;
+    font-weight: 600;
+    border-radius: 999px;
+    background: #fee2e2;
+    color: #7f1d1d;
+    transition: transform 200ms ease;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Invoice settings</h1>
+  <p class="hint">Changes apply to every workspace on this plan.</p>
+
+  <div class="panel">
+    <div class="field">
+      <input type="text" placeholder="Workspace name" aria-invalid="true">
+    </div>
+
+    <div class="row">
+      <!-- Defect: no accessible name. -->
+      <button class="icon-btn" type="button"><span aria-hidden="true">×</span></button>
+
+      <!-- Defect: 28px tall, and disabled is never styled. -->
+      <button class="btn" type="button" disabled>Save changes</button>
+
+      <span class="badge">Past due</span>
+
+      <!-- Defect: state is carried by background colour only. -->
+      <button class="switch" type="button" role="switch" aria-checked="true"></button>
+    </div>
+  </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,129 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Kit and audit tests
+    runs-on: macos-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      # No dependencies to install: the kit uses only Node's built-in modules.
+      # A failure here means a parser or a check changed behaviour.
+      - name: Unit tests
+        run: node --test scripts/*.test.mjs
+
+  audit:
+    name: Examples pass the audit
+    runs-on: macos-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      # The reference example must pass in both themes. A failure here means the
+      # checks tightened or the kit regressed; both need a look.
+      - name: Billing settings, light and dark
+        run: |
+          node scripts/audit.mjs examples/billing-settings/billing-settings.html
+          node scripts/audit.mjs examples/billing-settings/billing-settings.html --theme dark
+
+      # The generated example must build and pass, which is the claim the kit
+      # makes about itself: a generator cannot emit a component without its states.
+      # The table is included because a generator that only ever produced a form
+      # would not have found the tint-on-a-tint contrast bug.
+      - name: Build and audit the generated examples
+        run: |
+          node examples/upload-queue/build.mjs
+          node examples/invoices/build.mjs
+
+      # The fixture with defects on purpose must keep failing, in a specific way.
+      # If it ever passes, the checks stopped checking.
+      - name: The broken fixture still fails
+        run: |
+          if node scripts/audit.mjs examples/broken/broken.html --quiet; then
+            echo "::error::the broken fixture passed the audit; a check has stopped checking"
+            exit 1
+          fi
+
+  layout:
+    name: Examples hold up in a real browser
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      # ubuntu-latest ships Chrome, which is what measure.mjs and shot.mjs need.
+      # These catch the class of bug the static audit cannot: a flex item that
+      # will not shrink, a grid that will not collapse, a page that scrolls
+      # sideways at 320px.
+      - name: No horizontal overflow at 1280, 640, 390 and 320
+        run: |
+          node scripts/measure.mjs examples/billing-settings/billing-settings.html --width 1280
+          node scripts/measure.mjs examples/billing-settings/billing-settings.html --width 390
+          node scripts/measure.mjs examples/billing-settings/billing-settings.html --width 320
+          node scripts/measure.mjs examples/upload-queue/upload-queue.html --width 320
+          node scripts/measure.mjs examples/invoices/invoices.html --width 640
+          node scripts/measure.mjs examples/invoices/invoices.html --width 390
+          node scripts/measure.mjs examples/invoices/invoices.html --width 320
+
+      - name: Screenshots
+        run: |
+          node scripts/shot.mjs examples/billing-settings/billing-settings.html --out shots
+          node scripts/shot.mjs examples/upload-queue/upload-queue.html --out shots
+          node scripts/shot.mjs examples/invoices/invoices.html --out shots
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: screenshots
+          path: shots/
+          if-no-files-found: ignore
+
+  regression:
+    name: Committed pages are unchanged
+    runs-on: macos-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      # The lock. Rebuilding every example must reproduce the committed bytes,
+      # so a change to the kit cannot land without the examples moving with it.
+      # If this fails, run the builds locally and commit the result.
+      - name: Rebuild the generated examples
+        run: |
+          node examples/upload-queue/build.mjs
+          node examples/invoices/build.mjs
+
+      - name: Committed pages are unchanged
+        run: |
+          git status --short
+          git diff --stat --exit-code
+          test -z "$(git status --porcelain)"

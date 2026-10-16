@@ -1,0 +1,4 @@
+# Screenshots are build output, not source: scripts/shot.mjs regenerates them.
+shots/
+node_modules/
+.DS_Store
