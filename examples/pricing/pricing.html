@@ -1,0 +1,1147 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pricing</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; }
+  body { margin: 0; }
+  img, svg, video { display: block; max-width: 100%; }
+  input, button, textarea, select { font: inherit; }
+:root {
+  --surface: #ffffff;
+  --ink: #111111;
+  --body: #1a1a1a;
+  --muted: #3f4652;
+  --faint: #5b6472;
+  --edge: #8a919d;
+  --edge-strong: #5d6470;
+  --hover: #f0f1f2;
+  --selected: #edf1fc;
+  --body-on-hover: #1a1a1a;
+  --muted-on-hover: #3f4652;
+  --body-on-selected: #1a1a1a;
+  --muted-on-selected: #3f4652;
+  --body-on-brand-soft: #1a1a1a;
+  --edge-strong-on-selected: #5d6470;
+  --brand: #1d4ed8;
+  --brand-ink: #ffffff;
+  --brand-hover: #1a45be;
+  --brand-quiet: #1d4ed8;
+  --focus: #1d4ed8;
+  --danger: #b42318;
+  --danger-fill: #b42318;
+  --danger-hover: #9e1f15;
+  --danger-ink: #5c120c;
+  --danger-ink-on-selected: #5c120c;
+  --danger-soft: #f9eded;
+  --ok-soft: #ecf5ef;
+  --ok-ink: #15803d;
+  --ok-ink-on-selected: #157d3c;
+  --warn-soft: #f7f2eb;
+  --warn-ink: #9f6107;
+  --warn-ink-on-selected: #9e6007;
+  --disabled-surface: #caced3;
+  --disabled: #3f4652;
+}
+
+  body {
+    background: var(--surface);
+    color: var(--body);
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    font-size: 15px;
+    line-height: 1.5;
+  }
+
+  .wrap {
+    max-width: 640px;
+    margin-inline: auto;
+    padding: 40px 24px 64px;
+  }
+
+  h1 {
+    font-size: 28px;
+    line-height: 1.2;
+    font-weight: 650;
+    margin: 0 0 8px;
+  }
+
+  .lede {
+    margin: 0 0 32px;
+    color: var(--muted);
+    font-size: 15px;
+  }
+
+/* ---- Panel ---- */
+
+  .panel {
+    /* No width: the panel takes its container, which is what keeps it
+       inside a phone. A declared width overflows. */
+    background: var(--surface);
+    color: var(--body);
+    border: 1px solid var(--edge);
+    border-radius: 10px;
+    padding: 24px;
+  }
+
+  .panel + .panel { margin-top: 16px; }
+
+  .panel__title {
+    margin: 0 0 4px;
+    font-size: 16px;
+    font-weight: 600;
+  }
+
+  .panel__note {
+    margin: 0 0 20px;
+    color: var(--muted);
+    font-size: 13px;
+  }
+
+/* ---- Button: hover, focus, active, disabled, loading ---- */
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 44px;
+    padding: 10px 20px;
+    font: inherit;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--brand-ink);
+    background: var(--brand);
+    border: 1px solid transparent;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 120ms cubic-bezier(0.2, 0, 0, 1),
+                transform 80ms cubic-bezier(0.2, 0, 0, 1);
+  }
+
+  .btn:hover { background: var(--brand-hover); }
+  .btn:active { transform: translateY(1px); }
+
+  .btn:focus-visible {
+    outline: 2px solid var(--focus);
+    outline-offset: 2px;
+  }
+
+  .btn--quiet {
+    color: var(--body);
+    background: transparent;
+    border-color: var(--edge-strong);
+  }
+
+  .btn--quiet:hover { background: var(--surface); }
+
+/* A destructive action is a distinct button, not a warning label on a normal
+   one, and it carries its own hover, focus and disabled so that revoking a
+   person's access never looks like saving a setting. */
+  .btn--danger {
+    color: var(--brand-ink);
+    background: var(--danger-fill);
+    border-color: transparent;
+  }
+  .btn--danger:hover { background: var(--danger-hover); }
+  .btn--danger:active { transform: translateY(1px); }
+  .btn--danger:focus-visible {
+    outline: 2px solid var(--focus);
+    outline-offset: 2px;
+  }
+  .btn--danger:disabled {
+    background: var(--disabled-surface);
+    color: var(--disabled);
+    border-color: var(--edge);
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  .btn:disabled {
+    /* A disabled control reads as unavailable by being pale, not heavy.
+       A dark fill with white text passes contrast comfortably and still
+       looks like a button you are meant to press. */
+    background: var(--disabled-surface);
+    color: var(--disabled);
+    border-color: var(--edge);
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  .btn--quiet:disabled { background: transparent; }
+
+  .btn__spinner {
+    width: 14px;
+    height: 14px;
+    border: 2px solid currentColor;
+    border-top-color: transparent;
+    border-radius: 50%;
+    animation: states-spin 700ms linear infinite;
+  }
+
+  .btn[aria-busy="true"] { cursor: progress; }
+
+@keyframes states-spin { to { transform: rotate(360deg); } }
+
+/* ---- Field ---- */
+
+  .field { margin-bottom: 20px; }
+  .field:last-child { margin-bottom: 0; }
+
+  .field__label {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 13px;
+    font-weight: 500;
+  }
+
+  .field__control {
+    display: block;
+    width: 100%;
+    min-width: 0;
+    min-height: 44px;
+    padding: 10px 14px;
+    font: inherit;
+    font-size: 15px;
+    color: var(--body);
+    background: var(--surface);
+    border: 1px solid var(--edge-strong);
+    border-radius: 8px;
+    transition: border-color 120ms cubic-bezier(0.2, 0, 0, 1);
+  }
+
+  .field__control::placeholder { color: var(--muted); opacity: 1; }
+  .field__control:hover { border-color: var(--muted); }
+
+  .field__control:focus-visible {
+    outline: 2px solid var(--focus);
+    outline-offset: 2px;
+    border-color: var(--focus);
+  }
+
+  .field__control:disabled {
+    background: var(--disabled-surface, var(--surface));
+    color: var(--disabled);
+    cursor: not-allowed;
+  }
+
+  .field__control[aria-invalid="true"] {
+    border-color: var(--danger);
+    background: var(--danger-soft);
+  }
+
+  .field__control[aria-invalid="true"]:focus-visible {
+    outline-color: var(--danger);
+  }
+
+  .field__message {
+    margin: 8px 0 0;
+    font-size: 13px;
+    color: var(--danger-ink);
+  }
+
+  .field__message::before { content: "\26A0 "; }
+
+  .field__hint {
+    margin: 8px 0 0;
+    font-size: 13px;
+    color: var(--muted);
+  }
+
+/* ---- Switch: the knob moves, so the state is not colour alone ---- */
+
+  .switch {
+    position: relative;
+    flex: none;
+    width: 46px;
+    height: 26px;
+    padding: 0;
+    border: 1px solid var(--edge-strong);
+    border-radius: 999px;
+    background: var(--surface);
+    cursor: pointer;
+    appearance: none;
+    transition: background-color 140ms cubic-bezier(0.2, 0, 0, 1);
+  }
+
+  .switch::after {
+    content: "";
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--muted);
+    transition: transform 140ms cubic-bezier(0.2, 0, 0, 1);
+  }
+
+  .switch[aria-checked="true"] {
+    background: var(--brand);
+    border-color: var(--brand);
+  }
+
+  .switch[aria-checked="true"]::after {
+    transform: translateX(20px);
+    background: var(--brand-ink);
+  }
+
+  .switch:hover { border-color: var(--muted); }
+
+  .switch:focus-visible {
+    outline: 2px solid var(--focus);
+    outline-offset: 2px;
+  }
+
+  .switch:disabled { opacity: 0.45; cursor: not-allowed; }
+  .switch__label { display: none; }
+
+/* ---- Checkbox: the box itself is the signal ---- */
+
+  .checkbox {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 44px;
+  }
+
+  .checkbox__input {
+    flex: none;
+    width: 20px;
+    height: 20px;
+    accent-color: var(--brand);
+  }
+
+  .checkbox__input:focus-visible {
+    outline: 2px solid var(--focus);
+    outline-offset: 2px;
+  }
+
+  .checkbox__input:disabled { opacity: 0.45; cursor: not-allowed; }
+
+  .checkbox__label {
+    font-size: 15px;
+    cursor: pointer;
+  }
+
+  .checkbox__input:disabled + .checkbox__label { color: var(--disabled); cursor: not-allowed; }
+
+/* ---- Row: min-width:0 is what keeps the control on screen ---- */
+
+  .row {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    min-height: 44px;
+    padding: 10px 0;
+  }
+
+  .row + .row { border-top: 1px solid var(--edge); }
+
+  .row__text {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .row__label {
+    display: block;
+    font-size: 15px;
+    font-weight: 500;
+  }
+
+  .row__note {
+    display: block;
+    margin-top: 2px;
+    font-size: 13px;
+    color: var(--muted);
+  }
+
+  .actions {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-top: 24px;
+    padding-top: 20px;
+    border-top: 1px solid var(--edge);
+  }
+
+/* ---- Empty state: a state, not an afterthought ---- */
+
+  .empty {
+    padding: 32px 24px;
+    text-align: center;
+    border: 1px dashed var(--edge-strong);
+    border-radius: 10px;
+  }
+
+  .empty__title {
+    margin: 0 0 8px;
+    font-size: 15px;
+    font-weight: 600;
+  }
+
+  .empty__body {
+    margin: 0 0 16px;
+    font-size: 13px;
+    color: var(--muted);
+  }
+
+  .visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+    border: 0;
+  }
+
+/* ---- Table ----
+   A table is the component that breaks hardest on a phone, and the fix is not
+   a smaller font: it is deciding what a row means when the columns cannot sit
+   side by side. Below 640px each row becomes a card with its own labels, so no
+   value is ever orphaned from its heading. */
+
+  .table-wrap {
+    /* overflow-x:auto on a wide table is the honest fallback for the
+       mid sizes, but it is a last resort: the card layout below means
+       it is rarely reached. */
+    overflow-x: auto;
+    margin: 0 calc(-1 * 24px);
+    padding: 0 24px;
+  }
+
+  .table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 15px;
+  }
+
+  .table__caption {
+    text-align: left;
+    padding-bottom: 12px;
+    color: var(--muted);
+    font-size: 13px;
+  }
+
+  .table th,
+  .table td {
+    padding: 12px 16px;
+    text-align: left;
+    border-bottom: 1px solid var(--edge);
+  }
+
+  .table th {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+
+  .table th[scope="row"] {
+    font-weight: 500;
+    color: var(--body);
+  }
+
+  /* An identifier, a date and a money value are single tokens. Letting them
+     wrap mid-token ("INV-" over "2041") is what makes a table look
+     broken at a glance even when every column is legible. */
+  .table th[scope="row"],
+  .table td[data-label="Invoice"],
+  .table td[data-label="Due"] { white-space: nowrap; }
+
+  .num { font-variant-numeric: tabular-nums; }
+
+/* A cell that says "not included". The dash is decorative and the label carries
+   the meaning, and it is muted rather than invisible: a cell that is only just
+   visible reads as an accident. */
+  .cell-no {
+    color: var(--muted);
+    font-weight: 600;
+  }
+
+  .table tbody tr { transition: background-color 100ms cubic-bezier(0.2, 0, 0, 1); }
+  .table tbody tr:hover { background: var(--hover); }
+  .table tbody tr:hover td,
+  .table tbody tr:hover th { color: var(--body-on-hover); }
+  .table tbody tr.row--selected { background: var(--selected); }
+  .table tbody tr.row--selected td,
+  .table tbody tr.row--selected th { color: var(--body-on-selected); }
+  .table tbody tr.row--selected td:first-child {
+    /* Selection is a tint plus a rail, so the state never depends on the
+       tint alone, and the rail survives a greyscale render. */
+    box-shadow: inset 3px 0 0 var(--brand);
+  }
+  .table tbody tr.row--selected .status--ok { color: var(--ok-ink-on-selected); }
+  .table tbody tr.row--selected .status--warn { color: var(--warn-ink-on-selected); }
+  .table tbody tr.row--selected .status--stop { color: var(--danger-ink-on-selected); }
+  .table tbody tr.row--selected .status--neutral { color: var(--body-on-selected); }
+
+  /* Inside a tinted row the pill's own soft fill would be a third layer of
+     tint on top of the row tint, and the ink loses contrast against the
+     result. Dropping the fill costs nothing: the row already says it is
+     selected, and the word in the pill still carries the status. */
+  tr.row--selected .status { background: transparent; padding-left: 0; padding-right: 0; }
+
+  /* A control inside a tinted row keeps its own fill, and its label is
+     re-judged against that fill rather than against the row. Without this
+     a quiet button in a selected row loses contrast twice over. */
+  tr.row--selected .btn--quiet {
+    color: var(--body-on-brand-soft);
+    border-color: var(--edge-strong-on-selected);
+  }
+
+/* The sortable header is a real button, so it is a real target with a ring. */
+  .th-sort {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    min-height: 44px;
+    margin: calc(-1 * 12px) calc(-1 * 16px);
+    padding: 12px 16px;
+    font: inherit;
+    color: inherit;
+    background: transparent;
+    border: 0;
+    cursor: pointer;
+  }
+
+  .th-sort:hover { color: var(--body); }
+
+  .th-sort:focus-visible {
+    outline: 2px solid var(--focus);
+    outline-offset: -2px;
+    border-radius: 6px;
+  }
+
+  .th-sort--active { color: var(--body); }
+  .th-sort__arrow { font-size: 11px; opacity: 0.65; }
+  .th-sort--active .th-sort__arrow { opacity: 1; }
+
+/* ---- Skeleton: the shape of the content it replaces ---- */
+
+  .table-skeleton {
+    /* Sits under an empty table, so the height it reserves is the height
+       the rows will take. A spinner here would collapse the layout. */
+    padding: 8px 0 16px;
+  }
+  .skeleton { display: grid; gap: 12px; }
+  .skeleton__row { display: flex; gap: 16px; }
+  .skeleton__bar {
+    flex: 1;
+    height: 14px;
+    border-radius: 6px;
+    /* A visible base colour with a pulse on top, rather than a pulse
+       alone. A skeleton whose only signal is an opacity animation
+       renders as an empty box in any screenshot taken between keyframes,
+       which is exactly when somebody is looking for evidence. */
+    background: var(--hover);
+    animation: states-pulse 1.4s ease-in-out infinite;
+  }
+/* The pulse fades rather than disappearing, so the bar is always at least
+   half visible and the shape never vanishes between keyframes. */
+@keyframes states-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+/* ---- Status: the word carries the meaning, the dot only reinforces it ---- */
+
+  .status {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 2px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 500;
+    white-space: nowrap;
+  }
+
+  .status__dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: currentColor;
+  }
+
+  .status--ok { color: var(--ok-ink); background: var(--ok-soft); }
+  .status--warn { color: var(--warn-ink); background: var(--warn-soft); }
+  .status--stop { color: var(--danger-ink); background: var(--danger-soft); }
+  .status--neutral { color: var(--muted); background: var(--hover); }
+
+/* Secondary text inside a tinted row, re-judged against the tint. */
+  .muted-text { color: var(--muted); }
+  tr:hover .muted-text { color: var(--muted-on-hover); }
+  tr.row--selected .muted-text { color: var(--muted-on-selected); }
+
+/* ---- Pagination: the edges are disabled, not hidden ---- */
+
+  .pagination {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 16px;
+  }
+
+  .pagination__step {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    font: inherit;
+    color: var(--body);
+    background: transparent;
+    border: 1px solid var(--edge-strong);
+    border-radius: 8px;
+    cursor: pointer;
+  }
+
+  .pagination__step:hover:not(:disabled) { background: var(--hover); }
+
+  .pagination__step:focus-visible {
+    outline: 2px solid var(--focus);
+    outline-offset: 2px;
+  }
+
+  .pagination__step:disabled {
+    color: var(--disabled);
+    border-color: var(--edge);
+    cursor: not-allowed;
+  }
+
+  .pagination__status { font-size: 13px; color: var(--muted); }
+
+/* ---- Toolbar ---- */
+
+  .toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+
+  .toolbar .field { margin-bottom: 0; flex: 1; min-width: 180px; }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 1ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 1ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+
+/* A table turns into a stack of cards on a phone. Each value keeps its own
+   label, because a bare value with no heading is unreadable in a card. */
+@media (max-width: 640px) {
+  .table-wrap { overflow-x: visible; margin-inline: 0; padding-inline: 0; }
+  .table thead { display: none; }
+  .table, .table tbody, .table tr, .table td, .table th[scope="row"] { display: block; width: 100%; }
+  /* The caption is not a cell. Letting it into the row rules turns it into a
+     stack of one-word lines, which is how a caption ends up one word wide. */
+  .table caption { display: block; width: 100%; padding: 0 0 12px; }
+  .table tr {
+    border: 1px solid var(--edge);
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin-bottom: 12px;
+  }
+  .table tbody tr.row--selected td:first-child { box-shadow: none; }
+  .table tbody tr.row--selected { border-color: var(--brand); }
+  .table td, .table th[scope="row"] {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 16px;
+    padding: 6px 0;
+    border-bottom: 0;
+    /* The row header is bold in the wide layout; in the card layout the row's
+       identity should not shout over the values it heads. */
+    font-weight: 500;
+  }
+  .table td::before, .table th[scope="row"]::before {
+    content: attr(data-label);
+    flex: none;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--muted);
+  }
+  /* A label that does not apply, like the row action cell, gets no label
+     rather than an empty one. */
+  .table td[data-label=""]::before { content: none; }
+}
+
+@media (max-width: 480px) {
+  .wrap { padding: 24px 16px 48px; }
+  .panel { padding: 16px; }
+  .actions .btn { flex: 1; }
+}
+
+// The dark palette is the same tokens, re-pointed. Shipping only a light
+// theme is how an interface becomes unreadable at night.
+@media (prefers-color-scheme: dark) {
+:root {
+  --surface: #0e1116;
+  --ink: #e5e5e5;
+  --body: #7c7c7c;
+  --muted: #777c84;
+  --faint: #757d89;
+  --edge: #8a919d;
+  --edge-strong: #5d6470;
+  --hover: #171b21;
+  --selected: #171c29;
+  --body-on-hover: #838383;
+  --muted-on-hover: #7e838a;
+  --body-on-selected: #848484;
+  --muted-on-selected: #7f848b;
+  --body-on-brand-soft: #848484;
+  --edge-strong-on-selected: #626974;
+  --brand: #7c9cff;
+  --brand-ink: #363636;
+  --brand-hover: #6d89e0;
+  --brand-quiet: #7c9cff;
+  --focus: #7c9cff;
+  --danger: #ff8a80;
+  --danger-fill: #ff8a80;
+  --danger-hover: #e07971;
+  --danger-ink: #a37a76;
+  --danger-ink-on-selected: #a37a76;
+  --danger-soft: #211b1e;
+  --ok-soft: #0f1a19;
+  --ok-ink: #339156;
+  --ok-ink-on-selected: #3a945c;
+  --warn-soft: #1a1715;
+  --warn-ink: #ac7525;
+  --warn-ink-on-selected: #af7a2c;
+  --disabled-surface: #464b53;
+  --disabled: #999da3;
+}
+}
+
+
+  .hero-wrap { max-width: 1080px; margin-inline: auto; padding: 48px 24px 88px; }
+
+  .hero { text-align: center; margin-bottom: 40px; }
+  .hero__title {
+    font-size: clamp(32px, 6vw, 46px);
+    line-height: 1.1;
+    letter-spacing: -0.025em;
+    font-weight: 700;
+    margin: 0 0 12px;
+  }
+  .hero__lede { margin: 0 auto 28px; max-width: 46ch; color: var(--muted); font-size: 17px; }
+  .hero__note {
+    margin: 20px 0 0;
+    text-align: center;
+    font-size: 13px;
+    color: var(--muted);
+  }
+
+  /* ---- Segmented: selection is weight + panel + ink, never fill alone ----
+     The selected state is written against [aria-selected] rather than a class,
+     so the visual and the attribute cannot drift apart: if the script sets the
+     attribute, the styling follows, and the audit can see the state exists. */
+  .segmented {
+    display: inline-flex;
+    gap: 2px;
+    padding: 3px;
+    border-radius: 999px;
+    background: var(--hover);
+    border: 1px solid var(--edge);
+  }
+  .segmented__opt {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 44px;
+    padding: 0 18px;
+    font: inherit;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--muted);
+    background: transparent;
+    border: 0;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: color 120ms cubic-bezier(0.2,0,0,1), background-color 120ms cubic-bezier(0.2,0,0,1);
+  }
+  .segmented__opt:hover { color: var(--body); }
+  .segmented__opt:focus-visible {
+    outline: 2px solid var(--focus);
+    outline-offset: 2px;
+  }
+  .segmented__opt[aria-selected="true"] {
+    /* Three cues: a raised panel, a heavier label, and full-strength ink. */
+    color: var(--body);
+    background: var(--surface);
+    font-weight: 650;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.08), 0 0 0 1px var(--edge);
+  }
+  .segmented__opt:disabled {
+    color: var(--disabled);
+    cursor: not-allowed;
+  }
+  .segmented__badge {
+    padding: 1px 7px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--danger-ink);
+    background: var(--danger-soft);
+  }
+
+  /* ---- Plans ---- */
+  .plans {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    align-items: start;
+  }
+
+  .plan {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 28px 24px;
+    min-width: 0;
+    background: var(--surface);
+    border: 1px solid var(--edge);
+    border-radius: 14px;
+    transition: border-color 140ms cubic-bezier(0.2,0,0,1), transform 140ms cubic-bezier(0.2,0,0,1);
+  }
+  .plan:hover { border-color: var(--edge-strong); transform: translateY(-2px); }
+  .plan:focus-within { border-color: var(--focus); }
+
+  .plan--featured {
+    border-color: var(--brand);
+    box-shadow: 0 8px 28px -12px rgba(29,78,216,0.35);
+  }
+
+  .plan__flag {
+    margin: -28px -24px 20px;
+    padding: 8px 16px;
+    font-size: 12px;
+    font-weight: 650;
+    text-align: center;
+    color: var(--brand-ink);
+    background: var(--brand);
+    border-radius: 14px 14px 0 0;
+  }
+
+  .plan__name { margin: 0; font-size: 17px; font-weight: 650; }
+  .plan__blurb { margin: 0 0 18px; font-size: 14px; color: var(--muted); min-height: 2.6em; }
+
+  .plan__price { margin: 0; display: flex; align-items: baseline; gap: 4px; }
+  .plan__amount {
+    font-size: 40px;
+    line-height: 1.05;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    font-variant-numeric: tabular-nums;
+  }
+  .plan__per { font-size: 14px; color: var(--muted); }
+  .plan__price--error { font-size: 22px; font-weight: 600; color: var(--muted); }
+
+  /* The saving is stated, not implied by a smaller number. */
+  .plan__save {
+    margin: 10px 0 20px;
+    font-size: 13px;
+    line-height: 1.45;
+    color: var(--danger-ink);
+    min-height: 3.4em;
+  }
+  .plan__save--quiet { color: var(--muted); }
+
+  .plan__features {
+    margin: 24px 0 0;
+    padding: 20px 0 0;
+    list-style: none;
+    border-top: 1px solid var(--edge);
+    display: grid;
+    gap: 10px;
+  }
+  .plan__feature {
+    display: flex;
+    align-items: baseline;
+    gap: 9px;
+    font-size: 14px;
+    line-height: 1.4;
+  }
+  .plan__feature.is-off { color: var(--disabled); }
+  .plan__mark { flex: none; width: 16px; font-weight: 700; }
+  .plan__feature:not(.is-off) .plan__mark { color: var(--brand); }
+
+  /* A blank cell in a comparison table reads as missing data. */
+  .yes-no { font-weight: 700; }
+  .yes-no.is-no { color: var(--disabled); }
+
+  .notice {
+    margin-top: 28px;
+    padding: 18px 20px;
+    border-radius: 10px;
+    border: 1px solid var(--edge);
+  }
+  .notice--error { border-color: var(--danger); background: var(--danger-soft); }
+  .notice__title { margin: 0 0 6px; font-size: 15px; font-weight: 650; }
+  .notice__body { margin: 0; font-size: 14px; line-height: 1.5; }
+
+  .link { color: var(--brand); text-decoration: underline; text-underline-offset: 2px; }
+  .link:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; border-radius: 3px; }
+  .link:hover { color: var(--brand-hover); }
+
+  /* Three columns become one, and the featured card stops being featured
+     because "most teams pick this" means nothing in a single column. */
+  @media (max-width: 900px) {
+    .plans { grid-template-columns: 1fr; gap: 16px; }
+    .plan__blurb, .plan__save { min-height: 0; }
+    .plan--featured { order: -1; }
+    .plan__flag { margin: -28px -24px 20px; }
+  }
+
+  @media (max-width: 480px) {
+    .hero-wrap { padding: 32px 16px 64px; }
+    .hero__title { font-size: 30px; }
+    .hero__lede { font-size: 15px; }
+    .segmented { width: 100%; justify-content: center; }
+    .segmented__opt { flex: 1; justify-content: center; padding: 0 10px; }
+    .plan { padding: 22px 18px; }
+    .plan__flag { margin: -22px -18px 18px; }
+  }
+
+</style>
+</head>
+<body>
+
+<div class="hero-wrap">
+
+<div class="hero">
+  <h1 class="hero__title">Simple pricing</h1>
+  <p class="hero__lede">No seats you do not use, no annual contract. Cancel whenever.</p>
+  <div class="segmented" role="tablist" aria-label="Billing period">
+<button   type="button"   class="segmented__opt"   role="tab"   aria-selected="false"   tabindex="-1"    data-seg="cycle" >Monthly  </button>
+<button   type="button"   class="segmented__opt"   role="tab"   aria-selected="true"   tabindex="0"    data-seg="cycle" >Yearly<span class="segmented__badge">Save 17%</span>  </button>
+<button   type="button"   class="segmented__opt"   role="tab"   aria-selected="false"   tabindex="-1"   disabled   data-seg="cycle" >Per seat <span class="visually-hidden"> (not available)</span> </button>
+</div>
+</div>
+
+<section class="plans">
+  
+<section class="plan">
+  
+  <h3 class="plan__name">Solo</h3>
+  <p class="plan__blurb">For one person shipping things.</p>
+
+  <p class="plan__price">
+    <span class="plan__amount">$120</span>
+    <span class="plan__per">/year</span>
+  </p>
+
+  <p class="plan__save">
+         <strong>$24 less</strong> than monthly,
+         and $10 a month.
+       </p>
+
+  <button type="button" class="btn btn--quiet"><span class="btn__label">Start solo</span></button>
+
+  <ul class="plan__features">
+    
+      <li class="plan__feature">
+        <span class="plan__mark" aria-hidden="true">✓</span>
+        <span>3 projects</span>
+      </li>
+      <li class="plan__feature">
+        <span class="plan__mark" aria-hidden="true">✓</span>
+        <span>10 GB storage</span>
+      </li>
+      <li class="plan__feature">
+        <span class="plan__mark" aria-hidden="true">✓</span>
+        <span>Community support</span>
+      </li>
+      <li class="plan__feature is-off">
+        <span class="plan__mark" aria-hidden="true">—</span>
+        <span><span class="visually-hidden">Not included: </span>Custom domain</span>
+      </li>
+      <li class="plan__feature is-off">
+        <span class="plan__mark" aria-hidden="true">—</span>
+        <span><span class="visually-hidden">Not included: </span>Team permissions</span>
+      </li>
+  </ul>
+</section>
+<section class="plan plan--featured">
+  <p class="plan__flag">Most teams pick this</p>
+  <h3 class="plan__name">Team</h3>
+  <p class="plan__blurb">For a group that ships together.</p>
+
+  <p class="plan__price">
+    <span class="plan__amount">$290</span>
+    <span class="plan__per">/year</span>
+  </p>
+
+  <p class="plan__save">
+         <strong>$58 less</strong> than monthly,
+         and $24.17 a month.
+       </p>
+
+  <button type="button" class="btn"><span class="btn__label">Start a trial — 14 days free</span></button>
+
+  <ul class="plan__features">
+    
+      <li class="plan__feature">
+        <span class="plan__mark" aria-hidden="true">✓</span>
+        <span>Unlimited projects</span>
+      </li>
+      <li class="plan__feature">
+        <span class="plan__mark" aria-hidden="true">✓</span>
+        <span>100 GB storage</span>
+      </li>
+      <li class="plan__feature">
+        <span class="plan__mark" aria-hidden="true">✓</span>
+        <span>Role-based permissions</span>
+      </li>
+      <li class="plan__feature">
+        <span class="plan__mark" aria-hidden="true">✓</span>
+        <span>Custom domain</span>
+      </li>
+      <li class="plan__feature">
+        <span class="plan__mark" aria-hidden="true">✓</span>
+        <span>Audit log (90 days)</span>
+      </li>
+  </ul>
+</section>
+<section class="plan">
+  
+  <h3 class="plan__name">Organisation</h3>
+  <p class="plan__blurb">For a company with a procurement process.</p>
+
+  <p class="plan__price">
+    <span class="plan__amount">$780</span>
+    <span class="plan__per">/year</span>
+  </p>
+
+  <p class="plan__save">
+         <strong>$156 less</strong> than monthly,
+         and $65 a month.
+       </p>
+
+  <button type="button" class="btn btn--quiet" disabled><span class="btn__label">Talk to us</span></button>
+
+  <ul class="plan__features">
+    
+      <li class="plan__feature">
+        <span class="plan__mark" aria-hidden="true">✓</span>
+        <span>Everything in Team</span>
+      </li>
+      <li class="plan__feature">
+        <span class="plan__mark" aria-hidden="true">✓</span>
+        <span>1 TB storage</span>
+      </li>
+      <li class="plan__feature">
+        <span class="plan__mark" aria-hidden="true">✓</span>
+        <span>SSO and SCIM</span>
+      </li>
+      <li class="plan__feature">
+        <span class="plan__mark" aria-hidden="true">✓</span>
+        <span>Audit log (unlimited)</span>
+      </li>
+      <li class="plan__feature">
+        <span class="plan__mark" aria-hidden="true">✓</span>
+        <span>Named support engineer</span>
+      </li>
+  </ul>
+</section>
+</section>
+<p class="hero__note">
+  Prices in USD, excluding tax. Seats are counted on the last day of the month.
+</p>
+<section class="panel">
+<h2 class="panel__title">Compare plans</h2>
+<p class="panel__note">Sorted alphabetically. Every cell says yes or no; none are blank.</p>
+<div class="table-wrap">
+<table class="table">
+<caption class="table__caption">What each plan includes</caption>
+<thead><tr><th scope="col" aria-sort="ascending"><button type="button" class="th-sort th-sort--active" data-direction="ascending"><span class="th-sort__label">Feature</span><span class="th-sort__arrow" aria-hidden="true">↑</span><span class="visually-hidden">, sorted ascending</span></button></th><th scope="col" style="text-align:right">Solo</th><th scope="col" style="text-align:right">Team</th><th scope="col" style="text-align:right">Organisation</th></tr></thead>
+<tbody><tr><th scope="row" data-label="Feature">Projects</th><td style="text-align:right" data-label="Solo">3</td><td style="text-align:right" data-label="Team">Unlimited</td><td style="text-align:right" data-label="Organisation">Unlimited</td></tr><tr><th scope="row" data-label="Feature">Storage</th><td style="text-align:right" data-label="Solo">10 GB</td><td style="text-align:right" data-label="Team">100 GB</td><td style="text-align:right" data-label="Organisation">1 TB</td></tr><tr><th scope="row" data-label="Feature">Support</th><td style="text-align:right" data-label="Solo">Community</td><td style="text-align:right" data-label="Team">Email, 1 business day</td><td style="text-align:right" data-label="Organisation">Named engineer</td></tr><tr><th scope="row" data-label="Feature">Custom domain</th><td style="text-align:right" data-label="Solo"><span class="cell-no" aria-label="Not included"><span aria-hidden="true">—</span></span></td><td style="text-align:right" data-label="Team"><span class="cell-no" aria-label="Not included"><span aria-hidden="true">—</span></span></td><td style="text-align:right" data-label="Organisation"><span class="cell-no" aria-label="Not included"><span aria-hidden="true">—</span></span></td></tr><tr><th scope="row" data-label="Feature">Role-based permissions</th><td style="text-align:right" data-label="Solo"><span class="cell-no" aria-label="Not included"><span aria-hidden="true">—</span></span></td><td style="text-align:right" data-label="Team"><span class="cell-no" aria-label="Not included"><span aria-hidden="true">—</span></span></td><td style="text-align:right" data-label="Organisation"><span class="cell-no" aria-label="Not included"><span aria-hidden="true">—</span></span></td></tr><tr><th scope="row" data-label="Feature">Audit log</th><td style="text-align:right" data-label="Solo"><span class="cell-no" aria-label="Not included"><span aria-hidden="true">—</span></span></td><td style="text-align:right" data-label="Team">90 days</td><td style="text-align:right" data-label="Organisation">Unlimited</td></tr><tr><th scope="row" data-label="Feature">SSO and SCIM</th><td style="text-align:right" data-label="Solo"><span class="cell-no" aria-label="Not included"><span aria-hidden="true">—</span></span></td><td style="text-align:right" data-label="Team"><span class="cell-no" aria-label="Not included"><span aria-hidden="true">—</span></span></td><td style="text-align:right" data-label="Organisation"><span class="cell-no" aria-label="Not included"><span aria-hidden="true">—</span></span></td></tr></tbody>
+</table>
+</div>
+</section>
+<section class="panel">
+<h2 class="panel__title">Have a coupon?</h2>
+<p class="panel__note">Stackable with the yearly discount.</p>
+<div class="field">
+<label class="field__label" for="field-1">Coupon code</label>
+<input class="field__control" id="field-1" name="coupon" type="text" placeholder="LAUNCH-2024" aria-describedby="field-1-hint">
+<p class="field__hint" id="field-1-hint">One code per account. We will tell you if it has expired.</p>
+</div>
+<div class="actions">
+        <button type="button" class="btn"><span class="btn__label">Apply code</span></button>
+        <button type="button" class="btn btn--quiet"><span class="btn__label">Talk to sales</span></button>
+        <button type="button" class="btn" disabled aria-busy="true"><span class="btn__spinner" aria-hidden="true"></span><span class="btn__label">Start a trial</span></button>
+        <button type="button" class="btn" disabled><span class="btn__label">Enterprise SSO</span></button>
+      </div>
+</section>
+<section class="panel">
+<h2 class="panel__title">What it looks like when prices have not loaded</h2>
+<p class="panel__note">The height is already reserved, so nothing jumps when they arrive.</p>
+
+<section class="plans plans--loading" aria-busy="true">
+  
+  <div class="plan">
+    <div class="skeleton" role="status"><span class="visually-hidden">Loading</span><div class="skeleton__row"><span class="skeleton__bar"></span><span class="skeleton__bar"></span></div><div class="skeleton__row"><span class="skeleton__bar"></span><span class="skeleton__bar"></span></div><div class="skeleton__row"><span class="skeleton__bar"></span><span class="skeleton__bar"></span></div></div>
+    <div class="skeleton" role="status"><span class="visually-hidden">Loading</span><div class="skeleton__row"><span class="skeleton__bar"></span></div></div>
+  </div>
+  <div class="plan">
+    <div class="skeleton" role="status"><span class="visually-hidden">Loading</span><div class="skeleton__row"><span class="skeleton__bar"></span><span class="skeleton__bar"></span></div><div class="skeleton__row"><span class="skeleton__bar"></span><span class="skeleton__bar"></span></div><div class="skeleton__row"><span class="skeleton__bar"></span><span class="skeleton__bar"></span></div></div>
+    <div class="skeleton" role="status"><span class="visually-hidden">Loading</span><div class="skeleton__row"><span class="skeleton__bar"></span></div></div>
+  </div>
+  <div class="plan">
+    <div class="skeleton" role="status"><span class="visually-hidden">Loading</span><div class="skeleton__row"><span class="skeleton__bar"></span><span class="skeleton__bar"></span></div><div class="skeleton__row"><span class="skeleton__bar"></span><span class="skeleton__bar"></span></div><div class="skeleton__row"><span class="skeleton__bar"></span><span class="skeleton__bar"></span></div></div>
+    <div class="skeleton" role="status"><span class="visually-hidden">Loading</span><div class="skeleton__row"><span class="skeleton__bar"></span></div></div>
+  </div>
+</section>
+<p class="hero__note">Fetching current prices…</p>
+</section>
+<section class="panel">
+<h2 class="panel__title">And when the request fails</h2>
+<p class="panel__note">Says what failed, offers a way out, and keeps a way to reach a human.</p>
+
+<section class="plans">
+  
+  <div class="plan">
+    <h3 class="plan__name">Solo</h3>
+    <p class="plan__price plan__price--error">Price unavailable</p>
+    <p class="plan__save plan__save--quiet">We could not reach the billing service.</p>
+    <button type="button" class="btn btn--quiet"><span class="btn__label">Retry</span></button>
+  </div>
+  <div class="plan">
+    <h3 class="plan__name">Team</h3>
+    <p class="plan__price plan__price--error">Price unavailable</p>
+    <p class="plan__save plan__save--quiet">We could not reach the billing service.</p>
+    <button type="button" class="btn btn--quiet"><span class="btn__label">Retry</span></button>
+  </div>
+  <div class="plan">
+    <h3 class="plan__name">Organisation</h3>
+    <p class="plan__price plan__price--error">Price unavailable</p>
+    <p class="plan__save plan__save--quiet">We could not reach the billing service.</p>
+    <button type="button" class="btn btn--quiet"><span class="btn__label">Retry</span></button>
+  </div>
+</section>
+<div class="notice notice--error" role="alert">
+  <p class="notice__title">Prices did not load</p>
+  <p class="notice__body">
+    This is usually temporary. Retry, or email
+    <a class="link" href="mailto:hello@example.com">hello@example.com</a>
+    and we will confirm your price by hand.
+  </p>
+</div>
+</section>
+</div>
+</body>
+</html>

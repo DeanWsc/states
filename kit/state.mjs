@@ -138,6 +138,10 @@ export function classify(node) {
   // intent: <button role="switch"> is a switch, not a button.
   if (role === "switch") return "switch";
   if (role === "checkbox") return "checkbox";
+  // role wins over the tag here too: <button role="tab"> is a tab, so its
+  // focus / checked / disabled set applies rather than the button's.
+  if (role === "tab") return "tab";
+  if (role === "radio") return "radio";
 
   if (tag === "button") return "button";
   if (tag === "a" && node.attrs.href) return "link";
@@ -193,10 +197,12 @@ export function classify(node) {
     }
   }
   const text = words.join(" ");
-  if (/\bcard\b|\bchip\b|\btile\b/.test(text)) return "card";
+  if (/\bcard\b|\bchip\b|\btile\b|\bplan\b/.test(text)) return "card";
   if (/\bswitch\b/.test(text)) return "switch";
   if (/\bcheckbox\b/.test(text)) return "checkbox";
   if (/\bradio\b/.test(text)) return "radio";
+  // An option inside a segmented control is a tab, whatever tag carries it.
+  if (/\bsegmented\b|\bsegment\b/.test(text)) return "tab";
   if (/\btab\b/.test(text)) return "tab";
   if (/\bbtn\b|\bbutton\b/.test(text)) return "button";
   if (/\bcontrol\b|\binput\b|\bfield\b/.test(text)) return "input";
@@ -304,13 +310,17 @@ function kindFromSelector(selector) {
     [/\bcheckbox\b/, "checkbox"],
     [/\bradio\b/, "radio"],
     [/\bswitch\b/, "switch"],
+    // A segmented control is a tablist with a different shape, and its options
+    // are tabs. Naming it here is what makes the focus / checked / disabled set
+    // apply to a component whose class says none of those words.
+    [/\bsegmented\b|\bsegment\b|\btablist\b/, "tab"],
     [/\bselect\b/, "select"],
     [/\bsearch\b/, "search"],
     [/\binput\b|\bcontrol\b|\bfield\b/, "input"],
     [/\bbtn\b|\bbutton\b/, "button"],
     [/\btab\b/, "tab"],
     [/\blink\b|\banchor\b/, "link"],
-    [/\bcard\b|\bchip\b|\btile\b/, "card"],
+    [/\bcard\b|\bchip\b|\btile\b|\bplan\b/, "card"],
     [/\brow\b|\blist\b|\bitem\b/, "list"],
     [/\btable\b/, "table"],
     [/\bmodal\b|\bdialog\b|\bdrawer\b/, "modal"],

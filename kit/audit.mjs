@@ -376,8 +376,18 @@ export function checkTapTargets(root, { min = MIN_TAP.minimum, ideal = MIN_TAP.i
     else if (minW !== null) effectiveW = minW;
     else effectiveW = padLeft + padRight + 40 + borderTop;
 
-    // Inline links inside a sentence are exempt from the target size minimum.
-    if (node.tag === "a" && style.display === "inline") continue;
+    // An inline link inside a sentence is exempt from the target size minimum
+    // (WCAG 2.5.8). The condition has to treat an undeclared display as inline,
+    // because that is the CSS initial value: a `<a>` with no display rule is
+    // inline, and requiring the property to be spelled out meant every plain
+    // link in a paragraph was reported as a 20px target.
+    const display = style.display ?? "inline";
+    if (node.tag === "a" && (display === "inline" || display === "contents")) continue;
+    // A link that opts into being a block control is judged normally.
+    if (node.tag === "a" && display === "block" && px(style.height, { fontSize }) === null) {
+      // It sizes from its own content, so the audit has no height to judge.
+      continue;
+    }
 
     if (effectiveH !== null && effectiveH < min) {
       findings.push({

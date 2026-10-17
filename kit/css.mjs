@@ -1044,6 +1044,21 @@ export function isNarrowOnly(condition) {
  * Returns the first opaque background behind an element, which is the colour a
  * label is actually read against.
  */
+/**
+ * The colour text is actually read against, given the chain of ancestor
+ * backgrounds.
+ *
+ * The chain is ordered outermost first, because that is the order styleTree
+ * walks. So the composite starts at the page and works inward: the outermost
+ * layer is the backdrop, and each nearer layer paints over it.
+ *
+ * The direction matters more than it looks. Starting from the innermost layer
+ * instead — which is the tempting reading of "the element's own background" —
+ * silently produces white for every element that has one, because the first
+ * opaque layer found from the inside is usually `body`, and everything painted
+ * on top of it is discarded. Every contrast number in the report is then
+ * measured against paper.
+ */
 export function effectiveBackground(parents, { defaultBackground = { r: 255, g: 255, b: 255, a: 1 } } = {}) {
   const layers = [];
   for (const style of parents) {
@@ -1054,11 +1069,16 @@ export function effectiveBackground(parents, { defaultBackground = { r: 255, g: 
     layers.push(c);
   }
   if (!layers.length) return defaultBackground;
-  // Composite from the bottommost up.
-  let out = layers[layers.length - 1];
-  for (let i = layers.length - 2; i >= 0; i--) {
-    out = composite(layers[i], out);
-    if (out.a >= 1) break;
+
+  // Outermost first: start at the page, then paint each nearer layer over it.
+  let out = defaultBackground;
+  for (const layer of layers) {
+    out = composite(layer, out);
+    if (out.a >= 1) {
+      // This layer is opaque, so nothing further in can show through. The rest
+      // of the chain is still walked only to keep the loop honest about order.
+      out.a = 1;
+    }
   }
   return out.a >= 1 ? out : composite(out, defaultBackground);
 }

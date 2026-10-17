@@ -425,3 +425,43 @@ test("the matrix reports which states each component actually has", () => {
   assert.ok(have.has("disabled"));
   assert.ok(!have.has("checked"), "a button has no checked state to claim");
 });
+
+// -------------------------------------------------------- background compositing
+
+test("contrast: a background on the element itself is the backdrop, not the page", () => {
+  // This is the bug that made every element measure against paper: the chain is
+  // ordered outermost first, and walking it the other way round starts at the
+  // page and discards everything painted on top.
+  const result = audit(page(
+    `body { background: #ffffff; }
+     .flag { color: #ffffff; background: #1d4ed8; font-size: 12px; font-weight: 600; }`,
+    `<p class="flag">Most teams pick this</p>`,
+  ));
+  assert.deepEqual(
+    errorsOf(result, "contrast"),
+    [],
+    "white on a blue flag is 6.7:1 and must not be measured against white",
+  );
+});
+
+test("contrast: a nested background wins over an ancestor's", () => {
+  const result = audit(page(
+    `body { background: #ffffff; }
+     .card { background: #111827; padding: 20px; }
+     .inner { background: #ffffff; color: #111827; font-size: 14px; }`,
+    `<div class="card"><p class="inner">text on white inside a dark card</p></div>`,
+  ));
+  assert.deepEqual(errorsOf(result, "contrast"), [], "the nearest opaque layer is the backdrop");
+});
+
+test("contrast: a translucent element composites over what is behind it", () => {
+  const result = audit(page(
+    `body { background: #ffffff; }
+     .tint { background: rgba(29,78,216,0.5); }
+     .p { color: #ffffff; font-size: 14px; }`,
+    `<div class="tint"><p class="p">white on a 50% blue wash over white</p></div>`,
+  ));
+  // The wash is a mid blue, so white on it is under 4.5:1 and must be reported.
+  const found = errorsOf(result, "contrast");
+  assert.equal(found.length, 1, "the wash must be read as the backdrop, not as white");
+});

@@ -263,7 +263,19 @@ export function table({
     ? rows.map((row, i) => {
         const isSelected = selected ? selected.includes(row.id ?? String(i)) : false;
         const cells = columns.map((col, ci) => {
-          const value = col.render ? col.render(row) : esc(row[col.key] ?? "");
+          const raw = row[col.key];
+          // A null cell is "not included", which is different from an empty
+          // string and very different from missing data. Rendering it as an
+          // empty <td> makes it indistinguishable from a cell that failed to
+          // load, and in a comparison table that ambiguity is the whole point.
+          let value;
+          if (col.render) {
+            value = col.render(row);
+          } else if (raw === null || raw === undefined) {
+            value = `<span class="cell-no" aria-label="Not included"><span aria-hidden="true">—</span></span>`;
+          } else {
+            value = esc(raw);
+          }
           const align = col.align === "right" ? ' style="text-align:right"' : "";
           // The row's identity cell is a real <th scope="row">, not a <td> with
           // a scope attribute: that is how a screen reader announces "Northwind,
@@ -782,6 +794,14 @@ ${indent}.table td[data-label="Invoice"],
 ${indent}.table td[data-label="Due"] { white-space: nowrap; }
 
 ${indent}.num { font-variant-numeric: tabular-nums; }
+
+/* A cell that says "not included". The dash is decorative and the label carries
+   the meaning, and it is muted rather than invisible: a cell that is only just
+   visible reads as an accident. */
+${indent}.cell-no {
+${indent}  color: var(--muted);
+${indent}  font-weight: 600;
+${indent}}
 
 ${indent}.table tbody tr { transition: background-color 100ms cubic-bezier(0.2, 0, 0, 1); }
 ${indent}.table tbody tr:hover { background: var(--hover); }
