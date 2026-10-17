@@ -53,11 +53,11 @@ jobs:
       # The table and the permissions panel are included because a generator that
       # only ever produced a form would not have found the tint-on-a-tint
       # contrast bug, nor the missing danger variant.
+      # scripts/build-all.mjs discovers every example with a build.mjs, so
+      # adding one cannot mean forgetting to add it here. It also prints what
+      # drifted, which is the question the lock asks two jobs later.
       - name: Build and audit the generated examples
-        run: |
-          node examples/upload-queue/build.mjs
-          node examples/invoices/build.mjs
-          node examples/access/build.mjs
+        run: node scripts/build-all.mjs
 
       # The fixture with defects on purpose must keep failing, in a specific way.
       # If it ever passes, the checks stopped checking.
@@ -124,10 +124,7 @@ jobs:
       # so a change to the kit cannot land without the examples moving with it.
       # If this fails, run the builds locally and commit the result.
       - name: Rebuild the generated examples
-        run: |
-          node examples/upload-queue/build.mjs
-          node examples/invoices/build.mjs
-          node examples/access/build.mjs
+        run: node scripts/build-all.mjs
 
       - name: Committed pages are unchanged
         run: |
