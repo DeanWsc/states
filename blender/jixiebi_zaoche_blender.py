@@ -1719,7 +1719,7 @@ def light_up(mods):
         ob.location = (2.15, s * 0.65, GROUND + 0.58)
         ob.rotation_euler = Vector((1, s * 0.05, -0.12)).to_track_quat("-Z", "Y").to_euler()
         for f, v in seq:
-            ld.energy = v * 900 * LIGHT_SCALE
+            ld.energy = v * 400 * LIGHT_SCALE
             ld.keyframe_insert("energy", frame=f)
     ld = bpy.data.lights.new("尾灯光", "AREA")
     ld.shape = "RECTANGLE"
@@ -1770,7 +1770,7 @@ def shot_eval(i, u, f):
         tgt = vlerp((-0.3, 0, 0.5), (-0.9, 0, 0.75), e)
         return pos, tgt, lerp(29, 31, e), vlerp((-0.3, 0, 0.8), (-1.9, 0, 1.1), e), 4.0
     # 低机位正面英雄镜头
-    pos = vlerp((7.4, 2.6, 0.46), (5.8, -1.1, 0.60), e)
+    pos = vlerp((6.4, 2.2, 0.46), (4.9, -0.9, 0.58), e)
     tgt = vlerp((0.6, 0.15, 0.62), (0.4, 0.0, 0.80), e)
     return pos, tgt, lerp(31, 29, e), Vector((2.2, 0.0, 0.5)), 2.8
 
