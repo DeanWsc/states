@@ -48,7 +48,7 @@ from mathutils.bvhtree import BVHTree
 # 可调参数
 # ---------------------------------------------------------------------------
 LIGHT_SCALE = 1.0                 # 画面偏暗调大（如 1.5），偏亮调小（如 0.7）
-PAINT = (0.42, 0.012, 0.018)      # 车漆颜色（线性 RGB），默认深红
+PAINT = (0.55, 0.018, 0.025)      # 车漆颜色（线性 RGB），默认深红
 HOLO = (0.10, 0.65, 1.00)         # 全息颜色
 HOLO_STRENGTH = 3.0               # 全息亮度
 VOLUME_DENSITY = 0.010            # 顶灯光束（空气雾）浓度，0 关闭
@@ -379,16 +379,21 @@ def holo_shader(nt, strength=HOLO_STRENGTH):
     edge = math_node(nt, "POWER", lw.outputs["Facing"], 1.5)
     tot = math_node(nt, "MULTIPLY_ADD", edge, 1.8)
     nt.links.new(lines, tot.node.inputs[2])
-    tot = math_node(nt, "ADD", tot, 0.12)
-    tot = math_node(nt, "MULTIPLY", tot, strength)
+    # 覆盖率（alpha）：EEVEE 的抖动透明会把"全透明+发光"整块丢掉，所以全息用部分覆盖的发光面
+    alpha = math_node(nt, "ADD", tot, 0.18)
+    alpha = math_node(nt, "MULTIPLY", alpha, 0.55)
+    alpha.node.use_clamp = True
+    tot = math_node(nt, "ADD", tot, 0.25)
+    tot = math_node(nt, "MULTIPLY", tot, strength * 1.6)
     em = nt.nodes.new("ShaderNodeEmission")
     em.inputs["Color"].default_value = (*HOLO, 1)
     nt.links.new(tot, em.inputs["Strength"])
     tr = nt.nodes.new("ShaderNodeBsdfTransparent")
-    add = nt.nodes.new("ShaderNodeAddShader")
-    nt.links.new(em.outputs[0], add.inputs[0])
-    nt.links.new(tr.outputs[0], add.inputs[1])
-    return add.outputs[0]
+    mix = nt.nodes.new("ShaderNodeMixShader")
+    nt.links.new(alpha, mix.inputs[0])
+    nt.links.new(tr.outputs[0], mix.inputs[1])
+    nt.links.new(em.outputs[0], mix.inputs[2])
+    return mix.outputs[0]
 
 
 def finish(nt, real_out):
@@ -416,13 +421,13 @@ def mat_basic(name, color, metallic=0.0, rough=0.5, coat=0.0, alpha=1.0, coat_ro
 
 def mat_paint():
     m, nt = new_mat("车漆")
-    b = principled(nt, PAINT, metallic=0.55, rough=0.32, coat=1.0, coat_rough=0.02)
+    b = principled(nt, PAINT, metallic=0.15, rough=0.32, coat=1.0, coat_rough=0.02)
     # 金属闪粉：细噪声扰动粗糙度
     tex = nt.nodes.new("ShaderNodeTexNoise")
     tex.inputs["Scale"].default_value = 900.0
     ramp = nt.nodes.new("ShaderNodeMapRange")
-    ramp.inputs["To Min"].default_value = 0.22
-    ramp.inputs["To Max"].default_value = 0.42
+    ramp.inputs["To Min"].default_value = 0.25
+    ramp.inputs["To Max"].default_value = 0.40
     nt.links.new(tex.outputs["Fac"], ramp.inputs["Value"])
     nt.links.new(ramp.outputs[0], b.inputs["Roughness"])
     finish(nt, b.outputs[0])
@@ -496,7 +501,7 @@ def build_materials():
     MAT["paint"] = mat_paint()
     MAT["black"] = mat_basic("黑色饰件", (0.012, 0.012, 0.013), rough=0.45)
     MAT["gloss_black"] = mat_basic("亮黑", (0.01, 0.01, 0.011), rough=0.08, coat=1.0)
-    MAT["glass"] = mat_basic("深色玻璃", (0.005, 0.006, 0.008), rough=0.02, coat=1.0, alpha=0.55)
+    MAT["glass"] = mat_basic("深色玻璃", (0.004, 0.005, 0.007), rough=0.03, coat=1.0)
     MAT["carbon"] = mat_carbon()
     MAT["tire"] = mat_basic("轮胎", (0.022, 0.022, 0.024), rough=0.78)
     MAT["rim"] = mat_basic("轮毂", (0.11, 0.11, 0.12), metallic=1.0, rough=0.22)
@@ -834,7 +839,7 @@ def build_axle(name, x, spec):
     objs.append(ob)
     bm = bmesh.new()
     for side in (1, -1):                                                       # 避震（黄色）
-        bm_cyl(bm, Vector((x - 0.04, side * 0.52, z + 0.20)), 0.045, 0.34, "Z", 16)
+        bm_cyl(bm, Vector((x - 0.04, side * 0.56, z + 0.08)), 0.045, 0.24, "Z", 16)
     objs.append(mesh_obj(name + "_避震", bm, [MAT["spring"]], "Car"))
     return objs
 
@@ -950,15 +955,23 @@ def surface_strip(tree, path_xy, lift=0.006, down=True, z_probe=3.0):
 
 
 def build_lights(nose):
+    """大灯：细长 LED 灯条，贴在车头前脸两侧（水平射线找表面）。"""
     tree = raycaster(nose)
     objs = []
+
+    def strip(y0, y1, z0, z1, n=24):
+        pts = []
+        for i in range(n + 1):
+            u = i / n
+            y, z = lerp(y0, y1, u), lerp(z0, z1, u) + GROUND
+            hit = tree.ray_cast(Vector((4.0, y, z)), Vector((-1, 0, 0)))
+            if hit[0] is not None:
+                pts.append(hit[0] + hit[1] * 0.008)
+        return pts
     for s in (1, -1):
-        path = [(lerp(2.10, 1.80, u), s * lerp(0.40, 0.88, u ** 0.8)) for u in [i / 24 for i in range(25)]]
-        pts = surface_strip(tree, path, 0.008)
-        objs.append(curve_obj("大灯_主" + ("左" if s > 0 else "右"), pts, 0.016, MAT["head"]))
-        path = [(lerp(2.03, 1.86, u), s * lerp(0.42, 0.74, u)) for u in [i / 16 for i in range(17)]]
-        pts = surface_strip(tree, [(px - 0.08, py) for px, py in path], 0.008)
-        objs.append(curve_obj("大灯_日行" + ("左" if s > 0 else "右"), pts, 0.008, MAT["head"]))
+        tag = "左" if s > 0 else "右"
+        objs.append(curve_obj("大灯_主" + tag, strip(s * 0.36, s * 0.86, 0.37, 0.45), 0.017, MAT["head"]))
+        objs.append(curve_obj("大灯_日行" + tag, strip(s * 0.50, s * 0.82, 0.32, 0.37, 16), 0.008, MAT["head"]))
     return objs, tree
 
 
@@ -1423,8 +1436,8 @@ def animate_modules(mods, roots, jobs):
             o.keyframe_insert("hide_viewport", frame=1)
             o.hide_render = False
             o.hide_viewport = False
-            o.keyframe_insert("hide_render", frame=appear)
-            o.keyframe_insert("hide_viewport", frame=appear)
+            o.keyframe_insert("hide_render", frame=appear + 1)
+            o.keyframe_insert("hide_viewport", frame=appear + 1)
             key_prop(o, "hid", appear, 1.0)
             key_prop(o, "hid", appear + 10, 0.0)
             key_prop(o, "holo", appear, 1.0)
@@ -1462,6 +1475,12 @@ def build_ghosts(mods, roots, jobs):
             key_prop(g, "fade", 140, 0.45)
             key_prop(g, "fade", j.T - 2, 0.45)
             key_prop(g, "fade", j.T + 2, 0.0)
+            # EEVEE 里全透明的面仍会挡住后面的车身（显示成黑色），所以不可见时直接关掉渲染
+            for f, hide in ((1, True), (t0 + 1, False), (j.T + 2, True)):
+                g.hide_render = hide
+                g.hide_viewport = hide
+                g.keyframe_insert("hide_render", frame=f)
+                g.keyframe_insert("hide_viewport", frame=f)
             ghosts.append(g)
     # 底盘幽灵的父子关系要在复制后用世界矩阵（模块根此时都在最终位置）
     return ghosts
@@ -1650,7 +1669,7 @@ def build_stage():
     light("轮廓光_左", "AREA", (-1.0, 6.5, 2.4), 700, (0.55, 0.8, 1.0), size=7.0, size_y=0.4, target=(0, 0, 0.6))
     light("轮廓光_右", "AREA", (1.0, -6.5, 2.4), 700, (0.55, 0.8, 1.0), size=7.0, size_y=0.4, target=(0, 0, 0.6))
     light("背光", "AREA", (-7.0, 0, 3.0), 600, (1.0, 0.6, 0.35), size=4.0, size_y=1.0, target=(0, 0, 0.5))
-    light("补光", "AREA", (6.0, 2.0, 2.0), 250, (0.9, 0.95, 1.0), size=3.0, target=(0, 0, 0.5))
+    light("补光", "AREA", (6.5, 1.5, 2.2), 600, (0.9, 0.95, 1.0), size=3.0, target=(0, 0, 0.5))
     for key, p in PAD.items():
         light("料台灯_" + key, "POINT", (p.x, p.y, 1.6), 0, HOLO, size=0.6)
     return L
@@ -1751,9 +1770,9 @@ def shot_eval(i, u, f):
         tgt = vlerp((-0.3, 0, 0.5), (-0.9, 0, 0.75), e)
         return pos, tgt, lerp(29, 31, e), vlerp((-0.3, 0, 0.8), (-1.9, 0, 1.1), e), 4.0
     # 低机位正面英雄镜头
-    pos = vlerp((5.6, 2.2, 0.42), (4.4, -0.55, 0.50), e)
-    tgt = vlerp((0.5, 0.2, 0.62), (0.2, 0.0, 0.72), e)
-    return pos, tgt, lerp(32, 29, e), Vector((2.1, 0.0, 0.6)), 2.8
+    pos = vlerp((8.4, 2.9, 0.48), (7.0, -1.3, 0.62), e)
+    tgt = vlerp((0.6, 0.15, 0.62), (0.4, 0.0, 0.80), e)
+    return pos, tgt, lerp(31, 29, e), Vector((2.2, 0.0, 0.5)), 2.8
 
 
 def build_cameras():
@@ -1908,7 +1927,7 @@ def build_title(cam):
         ob.hide_render = True
         ob.keyframe_insert("hide_render", frame=1)
         ob.hide_render = False
-        ob.keyframe_insert("hide_render", frame=t0)
+        ob.keyframe_insert("hide_render", frame=t0 + 1)
         key_prop(ob, "hid", t0, 1.0)
         key_prop(ob, "hid", t0 + 14, 0.0)
         s0 = ob.scale.copy()
