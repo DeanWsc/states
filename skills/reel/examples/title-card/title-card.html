@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>Title card</title>
+<!--
+  A 6-second 1080p title card, and the reference for how a composition is
+  built. Two kinds of motion, on purpose:
+    - CSS keyframes for the background and the rule, which the renderer pauses
+      and seeks for every frame;
+    - a seek(t) function for the counter and the words, which is a pure
+      function of time and the most robust way to animate.
+-->
+<style>
+  :root {
+    --bg-0: #0d1321;
+    --bg-1: #1d2d44;
+    --ink: #f0ebd8;
+    --muted: #b8c4d6;
+    --accent: #f4a259;
+  }
+  * { box-sizing: border-box; margin: 0; }
+  html, body { width: 1920px; height: 1080px; overflow: hidden; }
+  body {
+    background: radial-gradient(120% 120% at 20% 10%, var(--bg-1), var(--bg-0) 60%);
+    color: var(--ink);
+    font-family: "Inter", "Helvetica Neue", Arial, "Noto Sans CJK SC", "WenQuanYi Zen Hei", sans-serif;
+  }
+  .glow {
+    position: absolute; inset: -20%;
+    background: radial-gradient(40% 40% at 50% 50%, rgb(244 162 89 / 0.22), transparent 70%);
+    animation: drift 6s ease-in-out both;
+  }
+  @keyframes drift {
+    from { transform: translate(-18%, 8%) scale(0.9); }
+    to   { transform: translate(14%, -6%) scale(1.15); }
+  }
+  .stage {
+    position: absolute; left: 192px; right: 192px; top: 0; bottom: 0;
+    display: flex; flex-direction: column; justify-content: center; gap: 36px;
+  }
+  .kicker {
+    font-size: 40px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--accent);
+  }
+  h1 { font-size: 132px; line-height: 1.05; font-weight: 800; letter-spacing: -0.02em; }
+  h1 span { display: inline-block; }
+  .rule {
+    height: 6px; width: 100%; background: var(--accent); transform-origin: left center;
+    animation: grow 1.2s cubic-bezier(0.16, 1, 0.3, 1) 0.6s both;
+  }
+  @keyframes grow { from { transform: scaleX(0); } to { transform: scaleX(0.42); } }
+  .meta { display: flex; gap: 72px; align-items: baseline; }
+  .stat { font-size: 96px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .label { font-size: 44px; color: var(--muted); }
+</style>
+</head>
+<body>
+  <div class="glow"></div>
+  <main class="stage">
+    <p class="kicker" id="kicker">States · reel</p>
+    <h1 id="title"><span>每一帧</span> <span>都算数</span></h1>
+    <div class="rule"></div>
+    <div class="meta">
+      <span class="stat" id="stat">0</span>
+      <span class="label" id="label">帧，同一时间渲染两次结果一模一样</span>
+    </div>
+  </main>
+
+  <script src="../../kit/motion.js"></script>
+  <script>
+    const { interpolate, spring, Easing, stagger } = Reel;
+    const $ = (id) => document.getElementById(id);
+    const words = [...document.querySelectorAll("h1 span")];
+
+    window.__reel = {
+      width: 1920,
+      height: 1080,
+      fps: 30,
+      duration: 6,
+      seek(t) {
+        // Kicker fades up first.
+        const k = spring(t, { delay: 0.2, damping: 20 });
+        $("kicker").style.opacity = interpolate(t, [0.2, 0.6], [0, 1]);
+        $("kicker").style.transform = `translateY(${(1 - k) * 24}px)`;
+
+        // Each word springs in, staggered.
+        words.forEach((w, i) => {
+          const p = spring(t, { delay: stagger(i, 0.18, 0.45), stiffness: 140, damping: 18 });
+          w.style.opacity = interpolate(t, [stagger(i, 0.18, 0.45), stagger(i, 0.18, 0.75)], [0, 1]);
+          w.style.transform = `translateY(${(1 - p) * 80}px)`;
+        });
+
+        // The counter runs to the number of frames in the video.
+        const n = interpolate(t, [1.4, 3.4], [0, 180], { easing: Easing.outExpo });
+        $("stat").textContent = Math.round(n);
+        $("stat").style.opacity = interpolate(t, [1.2, 1.5], [0, 1]);
+        $("label").style.opacity = interpolate(t, [1.5, 1.9], [0, 1]);
+
+        // Everything leaves together in the last half second.
+        document.querySelector(".stage").style.opacity = interpolate(t, [5.5, 6], [1, 0], { easing: Easing.in });
+      },
+    };
+  </script>
+</body>
+</html>

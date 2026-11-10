@@ -140,6 +140,20 @@ CI can prove each check still fires — if that fixture ever passes, a check has
 browser what it laid out. They disagree in exactly the cases that matter, and the disagreements
 are the bugs worth finding.
 
+## Also here: Reel, for video
+
+[`skills/reel/`](skills/reel/SKILL.md) is a second skill on the same principle, for video: a
+composition is an HTML page, rendered frame by frame in headless Chrome and encoded to H.264 with
+ffmpeg — like Remotion or Revideo, with nothing to install. Its check exits 1 while text sits
+outside the title-safe area, is too small for a phone, leaves the screen before it can be read,
+fights the pixels behind it, or renders differently on a second pass.
+
+```sh
+cd skills/reel
+node scripts/check.mjs examples/title-card/title-card.html
+node scripts/render.mjs examples/title-card/title-card.html --out out/title-card.mp4
+```
+
 ## Requirements
 
 - **Node.js 20.10 or later.** No dependencies to install.
