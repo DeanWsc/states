@@ -3,3 +3,5 @@ shots/
 node_modules/
 .DS_Store
 out/
+__pycache__/
+*.pyc
