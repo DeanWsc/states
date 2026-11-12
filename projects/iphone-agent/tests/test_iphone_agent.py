@@ -122,9 +122,24 @@ class AgentLoop(unittest.TestCase):
         import iphone_agent.agent as mod
         mod.time.sleep = lambda s: None
         a.run("reply in Chinese")
-        self.assertEqual(self.clip, ["你好"])
-        self.assertEqual(self.sim.keys, [("v", ("cmd",))])
+        # The simulator's screen never shows the paste, so the agent retries once, then reports.
+        self.assertEqual(self.clip, ["你好", "你好"])
+        self.assertEqual(self.sim.keys, [("v", ("cmd",)), ("v", ("cmd",))])
         self.assertEqual(self.sim.typed, [])
+
+    def test_paste_that_shows_up_is_not_repeated(self):
+        a = self.agent([Action(action="type", text="你好", reason="reply"), Action(action="done", reason="ok")])
+        a.cal = pointer.Calibration(sx=0.85, sy=0.85)
+        import iphone_agent.agent as mod
+        mod.time.sleep = lambda s: None
+        sim = self.sim
+        real_key = sim.key
+        def key(code, mods=()):
+            real_key(code, mods)
+            sim.screen.paste((0, 0, 0), (40, 40, 300, 90))  # the pasted text appears
+        sim.key = key
+        a.run("reply in Chinese")
+        self.assertEqual(self.clip, ["你好"])
 
     def test_unchanged_screen_is_noted_for_the_next_step(self):
         a = self.agent([Action(action="tap", x=300, y=60, reason="tap empty space"), Action(action="done", reason="ok")])

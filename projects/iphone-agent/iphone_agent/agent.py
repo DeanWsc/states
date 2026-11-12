@@ -52,9 +52,18 @@ class Agent:
             return
         if not self.clipboard:
             raise RuntimeError("non-ASCII text needs the clipboard path (Mac + iPhone on the same Apple ID)")
-        self.clipboard(text)
-        time.sleep(1.5)
-        self.dev.key("v", ["cmd"])
+        # Universal Clipboard holds a copy only briefly, so copy and paste back to back,
+        # with nothing slow (screenshots, model calls) in between. If the screen did not
+        # change, the paste missed: copy again and paste once more.
+        for attempt in range(2):
+            before = self.capture()
+            self.clipboard(text)
+            time.sleep(1.5)
+            self.dev.key("v", ["cmd"])
+            time.sleep(self.settle)
+            if not _same(before, self.capture()):
+                return
+        self.log("paste did not change the screen; is Universal Clipboard on (same Apple ID, Handoff, Wi-Fi, Bluetooth)?")
 
     def home(self):
         self.dev.key("h", ["cmd"])
