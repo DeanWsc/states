@@ -1,0 +1,62 @@
+name: iphone-agent
+
+on:
+  push:
+    paths: ["projects/iphone-agent/**", ".github/workflows/iphone-agent.yml"]
+  pull_request:
+    paths: ["projects/iphone-agent/**", ".github/workflows/iphone-agent.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  computer:
+    name: Computer side (simulator tests)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: projects/iphone-agent
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements.txt
+      - run: python -m unittest discover tests -v
+      - run: python -m iphone_agent demo
+
+  firmware:
+    name: ESP32-S3 firmware builds
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: projects/iphone-agent/firmware
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Logic tests on the PC (key codes, move splitting)
+        run: g++ -std=c++17 -Wall -Wextra -Werror -I src test_host/test_logic.cpp -o test_logic && ./test_logic
+      - uses: actions/cache@v4
+        with:
+          path: ~/.platformio
+          key: pio-${{ hashFiles('projects/iphone-agent/firmware/platformio.ini') }}
+      - run: pip install platformio
+      - run: pio run
+      - name: One file to flash
+        run: |
+          pio pkg exec -p tool-esptoolpy -- esptool.py --chip esp32s3 merge_bin -o firmware-merged.bin \
+            0x0 .pio/build/esp32-s3/bootloader.bin 0x8000 .pio/build/esp32-s3/partitions.bin \
+            0xe000 ~/.platformio/packages/framework-arduinoespressif32/tools/partitions/boot_app0.bin \
+            0x10000 .pio/build/esp32-s3/firmware.bin
+      - uses: actions/upload-artifact@v5
+        with:
+          name: iphone-agent-firmware
+          path: |
+            projects/iphone-agent/firmware/firmware-merged.bin
+            projects/iphone-agent/firmware/.pio/build/esp32-s3/firmware.bin
+          if-no-files-found: error

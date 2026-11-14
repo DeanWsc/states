@@ -68,6 +68,36 @@ class Agent:
     def home(self):
         self.dev.key("h", ["cmd"])
 
+    def double_tap(self, x, y):
+        pointer.goto(self.dev, self.capture, self.cal, x, y)
+        self.dev.click()
+        self.dev.click()
+
+    # --- 刷视频 ---------------------------------------------------------------
+    def scroll_videos(self, count=None, interval=8.0, like_every=0, sleep=time.sleep):
+        """Watch short videos hands-free: wait `interval` seconds, then swipe up to the next one.
+        With like_every=N, every Nth video gets a double tap in the middle first (a like in
+        Douyin, Kuaishou and most feeds). No model calls, so no API cost. count=None keeps going
+        until Ctrl+C. Returns how many videos were swiped past."""
+        if self.cal is None:
+            self.calibrate()
+        w, h = self.capture().size
+        x = w / 2
+        done = 0
+        try:
+            while count is None or done < count:
+                sleep(interval)
+                if like_every and (done + 1) % like_every == 0:
+                    self.double_tap(x, h * 0.45)
+                    self.log(f"liked video {done + 1}")
+                self.swipe(x, h * 0.75, x, h * 0.25)
+                done += 1
+                self.log(f"next video ({done})")
+        except KeyboardInterrupt:
+            self.dev.up()  # Ctrl+C may land mid-swipe; never leave the button held
+            self.log(f"stopped after {done} videos")
+        return done
+
     # --- the loop -----------------------------------------------------------
     def run(self, task, max_steps=25):
         if self.cal is None:

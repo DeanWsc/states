@@ -6,6 +6,8 @@
   accuracy  --port P            acceptance test: 10 random points
   tap X Y   --port P            move to a screenshot pixel and tap
   run "TASK" --port P [--yes]   let Claude do a task; asks before every action unless --yes
+  scroll --port P               刷视频: swipe to the next video every --interval seconds
+         [--interval 8] [--count N] [--like-every N]     (no API key needed; Ctrl+C stops)
   shot [--out FILE]             save what the capture sees (check the crop)
 """
 import argparse
@@ -52,7 +54,7 @@ def _ask(action):
 
 def main(argv=None):
     p = argparse.ArgumentParser(prog="iphone_agent", description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    p.add_argument("command", choices=["demo", "ports", "calibrate", "accuracy", "tap", "run", "shot"])
+    p.add_argument("command", choices=["demo", "ports", "calibrate", "accuracy", "tap", "run", "shot", "scroll"])
     p.add_argument("rest", nargs="*")
     p.add_argument("--port")
     p.add_argument("--region", help="x,y,w,h screen region instead of finding the QuickTime window")
@@ -61,6 +63,9 @@ def main(argv=None):
     p.add_argument("--yes", action="store_true", help="do not ask before each action")
     p.add_argument("--steps", type=int, default=25)
     p.add_argument("--effort", default="medium", choices=["low", "medium", "high"])
+    p.add_argument("--interval", type=float, default=8.0, help="scroll: seconds to watch each video")
+    p.add_argument("--count", type=int, help="scroll: stop after this many videos (default: until Ctrl+C)")
+    p.add_argument("--like-every", type=int, default=0, help="scroll: double-tap to like every Nth video")
     args = p.parse_args(argv)
 
     if args.command == "demo":
@@ -107,6 +112,12 @@ def main(argv=None):
             x, y = (float(v) for v in args.rest[:2])
             pointer.goto(dev, capture, cal, x, y)
             dev.click()
+            return 0
+        if args.command == "scroll":
+            from .agent import Agent
+
+            agent = Agent(dev, capture, planner=None, cal=cal)
+            agent.scroll_videos(count=args.count, interval=args.interval, like_every=args.like_every)
             return 0
         if args.command == "run":
             from .agent import Agent

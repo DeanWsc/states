@@ -1,8 +1,9 @@
-# iphone-agent：用 ESP32 像人一样操作 iPhone（电脑端）
+# iphone-agent：用 ESP32 像人一样操作 iPhone
 
 ESP32-S3 冒充蓝牙鼠标和键盘，iPhone 打开「辅助触控」后就能被它点击、滑动、打字。
-这里是**电脑端**：从 Mac 上看 iPhone 屏幕 → 让 Claude 决定下一步 → 通过串口让 ESP32 去点。
-不越狱、不装 App、不改 iPhone 系统。固件由 Grok 负责，协议见下文。
+**电脑端**（`iphone_agent/`）：从 Mac 上看 iPhone 屏幕 → 让 Claude 决定下一步 → 通过串口让 ESP32 去点。
+**固件**（`firmware/`）：ESP32-S3 上跑的程序，实现下文的串口协议 v0.2。
+不越狱、不装 App、不改 iPhone 系统。
 
 ## 现在能做什么
 
@@ -15,6 +16,16 @@ ESP32-S3 冒充蓝牙鼠标和键盘，iPhone 打开「辅助触控」后就能�
 | `python -m iphone_agent accuracy --port P` | **验收 1**：随机 10 个点，报告最大误差，PASS/FAIL | 全部 |
 | `python -m iphone_agent tap X Y --port P` | 点截图里的 (X, Y) | 全部 |
 | `python -m iphone_agent run "打开设置，进入蓝牙" --port P` | 让 Claude 完成一个任务，**每一步都先问你**（加 `--yes` 不问） | 全部 + API key |
+| `python -m iphone_agent scroll --port P` | **刷视频**：每 8 秒上滑一条（`--interval` 改秒数，`--count` 刷几条，`--like-every 3` 每 3 条双击点赞），Ctrl+C 停 | 全部，不需要 API key |
+
+## 烧录固件
+
+需要一块 **ESP32-S3** 开发板（淘宝搜「ESP32-S3 开发板 N16R8」，二三十元），用板子上标着 **USB**（不是 COM/UART）的那个 Type-C 口接电脑：烧录和后面的串口通信都走这个口。
+
+- **最省事**：在 GitHub 仓库的 Actions → iphone-agent → 最近一次成功的运行里下载 `iphone-agent-firmware`，解压得到 `firmware-merged.bin`。用 Chrome 打开乐鑫的网页烧录工具 ESP Launchpad 或 esptool-js，连上板子，把这个文件烧到地址 `0x0`。
+- **自己编译**：`pip install platformio`，然后在 `firmware/` 里 `pio run -t upload`。端口不出现时，按住板子上的 BOOT 键再插线。
+
+烧好后 iPhone 蓝牙里会出现「iPhone Agent」，点它配对（不用输配对码）。`firmware/test_host/` 里是不需要板子的逻辑测试（按键码、移动拆分）。
 
 ## 第一次使用
 
@@ -38,7 +49,7 @@ iOS 的蓝牙鼠标**只有相对移动、还带加速**，所以不能靠算坐
 2. **按比例移过去**：比例是校准时实测的，不是假设的。
 3. **再找一次、再修正**，直到误差在 6 像素内（最多 6 轮）。
 
-模拟器故意加了加速、每步随机误差和屏幕边缘，测试在这些条件下仍能收敛（`python -m unittest discover tests`，17 个测试，不需要硬件和 API key）。
+模拟器故意加了加速、每步随机误差和屏幕边缘，测试在这些条件下仍能收敛（`python -m unittest discover tests`，21 个测试，不需要硬件和 API key）。
 
 ## 打中文
 
@@ -75,4 +86,6 @@ USB 串口 115200 8N1，一行一条 JSON。在 Grok 的 v0.1 上改了三处，
 
 - iOS 辅助触控指针在 QuickTime 画面里的实际大小和对比度（找指针依赖它）；
 - `Cmd+H` 能否在 iPhone 上回主屏，不行就改成点辅助触控菜单里的「主屏幕」；
-- 指针加速在不同步长下的实际曲线（闭环能容忍，但影响要几轮修正）。
+- 指针加速在不同步长下的实际曲线（闭环能容忍，但影响要几轮修正）；
+- 固件只在云端编译过，还没在板子上跑过：配对、iOS 是否接受键鼠合一的设备、步长 8 单位 / 10 ms 是否顺滑；
+- 刷视频的上滑大约用 1 秒拖完，抖音等 App 是否认这种慢速拖动为翻页（不认就改成更少、更大的步）。

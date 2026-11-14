@@ -158,6 +158,46 @@ class AgentLoop(unittest.TestCase):
         self.assertGreater(self.sim.path[0][1] - self.sim.path[-1][1], 400)
 
 
+class ScrollVideos(unittest.TestCase):
+    def setUp(self):
+        self.sim = SimPhone(seed=11)
+        self.swipes = []
+        real_down, real_up = self.sim.down, self.sim.up
+        def up():
+            real_up()
+            self.swipes.append(list(self.sim.path))
+        self.sim.down, self.sim.up = real_down, up
+        self.waits = []
+        self.agent = Agent(self.sim, self.sim.capture, planner=None, log=lambda *_: None, settle=0)
+        self.agent.cal = pointer.calibrate(self.sim, self.sim.capture, self.sim.w, self.sim.h)
+
+    def test_each_video_is_an_upward_swipe_after_watching(self):
+        n = self.agent.scroll_videos(count=3, interval=5, sleep=self.waits.append)
+        self.assertEqual(n, 3)
+        self.assertEqual(self.waits, [5, 5, 5])
+        self.assertEqual(len(self.swipes), 3)
+        for path in self.swipes:
+            self.assertGreater(path[0][1] - path[-1][1], self.sim.h * 0.35)  # moved up a long way
+            self.assertLess(abs(path[0][0] - path[-1][0]), 40)                # and stayed straight
+        self.assertEqual(self.sim.taps, [])
+
+    def test_like_every_second_video_with_a_double_tap(self):
+        self.agent.scroll_videos(count=4, interval=0, like_every=2, sleep=lambda s: None)
+        self.assertEqual(len(self.sim.taps), 4)  # two double taps: videos 2 and 4
+        for tx, ty in self.sim.taps:
+            self.assertLess(abs(tx - self.sim.w / 2), 20)
+            self.assertLess(abs(ty - self.sim.h * 0.45), 20)
+
+    def test_ctrl_c_stops_cleanly(self):
+        calls = []
+        def sleep(s):
+            calls.append(s)
+            if len(calls) == 3:
+                raise KeyboardInterrupt
+        self.assertEqual(self.agent.scroll_videos(interval=1, sleep=sleep), 2)
+        self.assertFalse(self.sim.held)
+
+
 class PlannerScaling(unittest.TestCase):
     def test_coordinates_come_back_in_full_resolution_pixels(self):
         sent = {}
